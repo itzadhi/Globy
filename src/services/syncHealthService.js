@@ -17,7 +17,7 @@ async function getSyncHealth(client, discordChannel, options = {}) {
       channel: discordChannel,
       fields: [
         { name: 'Connected', value: 'No' },
-        { name: 'Fix', value: 'Run `/setchannel` or `,setchannel` in this channel.' }
+        { name: 'Fix', value: 'Run `/setchannel type:plain` or `,setchannel plain` in this channel.' }
       ]
     };
   }

@@ -172,11 +172,12 @@ function cv2Card(log, client, uploadedUrls, profile) {
   const exactUsername = exactAuthorUsername(log);
   const displayName = sanitizeMentions(log.authorDisplayName || log.authorUsername || 'Unknown User');
   const level = Number.isFinite(profile?.level) ? profile.level : 0;
+  const botName = sanitizeMentions(client?.user?.username || 'Globy CV2');
+  const sourceGuild = sanitizeMentions(log.sourceGuildName || 'Unknown Server');
+  const sourceChannel = sanitizeMentions(log.sourceChannelName || 'chat');
   const authorContent = [
-    `### ${displayName} | Level ${level}`,
-    `\`@${exactUsername}\``,
-    '',
-    body
+    `### ${displayName}`,
+    `\`@${exactUsername}\` | Level ${level}`
   ].join('\n');
 
   let authorBlock = text(authorContent);
@@ -188,12 +189,21 @@ function cv2Card(log, client, uploadedUrls, profile) {
 
   return container({
     blocks: [
-      text(`### ${client?.user?.username || 'Globy CV2'} Global Chat`),
+      text([
+        `## ${botName} Global Chat`,
+        `${sourceGuild} | #${sourceChannel}`
+      ].join('\n')),
+      { type: 'separator' },
       authorBlock,
       { type: 'separator', divider: false },
       text([
-        `Sent by \`${exactUsername}\``,
-        `${sanitizeMentions(log.sourceGuildName || 'Unknown Server')} | #${sanitizeMentions(log.sourceChannelName || 'chat')}`
+        '**Message**',
+        body
+      ].join('\n')),
+      { type: 'separator', divider: false },
+      text([
+        '**Author**',
+        `\`${exactUsername}\``
       ].join('\n'))
     ]
   });

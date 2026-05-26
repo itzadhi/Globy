@@ -24,18 +24,18 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('setchannel')
     .setDescription('Make a text channel ready for Globy CV2 sync.')
+    .addStringOption((option) =>
+      option
+        .setName('type')
+        .setDescription('Required: choose plain user webhook style or CV2 card style.')
+        .addChoices(...displayModeChoices())
+        .setRequired(true)
+    )
     .addChannelOption((option) =>
       option
         .setName('channel')
         .setDescription('The text channel to connect. Defaults to this channel.')
         .addChannelTypes(ChannelType.GuildText)
-        .setRequired(false)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('type')
-        .setDescription('How synced messages should look in this channel.')
-        .addChoices(...displayModeChoices())
         .setRequired(false)
     ),
 
@@ -67,7 +67,7 @@ module.exports = {
     });
 
     if (existing) {
-      const displayMode = normalizeDisplayMode(requestedDisplayMode, existing.displayMode || config.sync.defaultDisplayMode);
+      const displayMode = normalizeDisplayMode(requestedDisplayMode);
       existing.displayMode = displayMode;
       existing.channelName = channel.name;
       existing.guildName = interaction.guild.name;
@@ -82,7 +82,7 @@ module.exports = {
       return;
     }
 
-    const displayMode = normalizeDisplayMode(requestedDisplayMode, config.sync.defaultDisplayMode);
+    const displayMode = normalizeDisplayMode(requestedDisplayMode);
 
     await upsertGuild(interaction.guild);
     await Network.findOneAndUpdate(

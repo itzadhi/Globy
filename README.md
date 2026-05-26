@@ -74,7 +74,7 @@ CLIENT_ID=your_application_id
 MONGO_URI=your_mongodb_connection_string
 DEV_IDS=your_discord_user_id
 PREFIX=,
-DEFAULT_SYNC_MODE=normal
+DEFAULT_SYNC_MODE=plain
 BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moderation, and recovery.
 THEME_PRIMARY=#B829FF
 THEME_SECONDARY=#35FF95
@@ -172,16 +172,15 @@ Only the server owner or a user with Administrator permission can connect channe
 Slash:
 
 ```text
-/setchannel
-/setchannel channel:#global-chat
+/setchannel type:plain channel:#global-chat
 /setchannel type:cv2
 ```
 
 Prefix:
 
 ```text
-,setchannel
-,setchannel #global-chat
+,setchannel plain
+,setchannel #global-chat plain
 ,setchannel #global-chat cv2
 ```
 
@@ -191,24 +190,24 @@ Run the same setup command in each server/channel you want connected. There is n
 
 Each connected channel can choose its own message style:
 
-- `normal`: synced messages use the real sender username and avatar as the webhook identity, then show only the message content.
+- `plain`: synced messages use the real sender username and avatar as the webhook identity, then show only the message content.
 - `cv2`: synced messages use the bot identity and show a premium Components V2 card with the sender avatar, exact username, level, message, attachments, and source channel info.
 
 Slash examples:
 
 ```text
-/setchannel type:normal
+/setchannel type:plain
 /setchannel type:cv2
 ```
 
 Prefix examples:
 
 ```text
-,setchannel normal
+,setchannel plain
 ,setchannel cv2
 ```
 
-Running `/setchannel` again on an already connected channel updates the style instead of making you remove and reconnect it.
+The style is required every time you run setup. Running `/setchannel` again on an already connected channel updates the style instead of making you remove and reconnect it.
 
 ## Sync Health
 
@@ -328,7 +327,7 @@ For each connected channel, Globy CV2:
 6. Stores every webhook message ID for edits, deletes, and recovery.
 7. Recreates broken webhooks when Discord reports deleted/invalid webhook errors.
 
-The receiving channel's selected style controls the webhook payload. One server can keep `normal` while another server receives the same synced chat in `cv2` card style.
+The receiving channel's selected style controls the webhook payload. One server can keep `plain` while another server receives the same synced chat in `cv2` card style.
 
 Attachments are uploaded when small enough. If upload fails or the file is too large, Globy CV2 keeps the sync alive and includes clean attachment links instead of failing the whole webhook send.
 

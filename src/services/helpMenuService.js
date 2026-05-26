@@ -10,6 +10,7 @@ const {
   ThumbnailBuilder
 } = require('discord.js');
 const { cleanUiText, container, text } = require('../utils/componentsV2');
+const { ownedCustomId, parseOwnedCustomId } = require('../utils/componentIds');
 const { config } = require('../config/env');
 const { isDeveloper } = require('../middleware/permissions');
 
@@ -182,10 +183,14 @@ function quickLinkButtons(client) {
   return buttons.slice(0, 5);
 }
 
-function categorySelect(categories, selectedId = null) {
+function ownerIdFromOptions(options = {}) {
+  return options.ownerId || options.viewerId;
+}
+
+function categorySelect(categories, selectedId = null, ownerId) {
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
-      .setCustomId('help_category_select')
+      .setCustomId(ownedCustomId('help', 'category', ownerId))
       .setPlaceholder('Choose a category...')
       .setMinValues(1)
       .setMaxValues(1)
@@ -247,21 +252,21 @@ function categorySection(client, category) {
     );
 }
 
-function actionRowsForHome(client, categories) {
+function actionRowsForHome(client, categories, ownerId) {
   const rows = [
-    categorySelect(categories)
+    categorySelect(categories, null, ownerId)
   ];
   const links = quickLinkButtons(client);
   if (links.length) rows.push(new ActionRowBuilder().addComponents(links));
   return rows;
 }
 
-function actionRowsForCategory(categories, category) {
+function actionRowsForCategory(categories, category, ownerId) {
   return [
-    categorySelect(categories, category.id),
+    categorySelect(categories, category.id, ownerId),
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('help_back_home')
+        .setCustomId(ownedCustomId('help', 'back', ownerId))
         .setStyle(ButtonStyle.Secondary)
         .setLabel('Back to Main Menu')
     )
@@ -274,13 +279,14 @@ function payloadFlags(ephemeral) {
 
 function buildHelpHomePayload(client, options = {}) {
   const categories = commandCategories(client, options);
+  const ownerId = ownerIdFromOptions(options);
   const blocks = [
     { type: 'section', section: homeSection(client, categories) },
     { type: 'separator' },
     text('**Choose a category:**')
   ];
 
-  for (const row of actionRowsForHome(client, categories)) {
+  for (const row of actionRowsForHome(client, categories, ownerId)) {
     blocks.push({ type: 'row', row });
   }
 
@@ -294,13 +300,14 @@ function buildHelpHomePayload(client, options = {}) {
 function buildHelpCategoryPayload(client, categoryId, options = {}) {
   const categories = commandCategories(client, options);
   const category = categoryById(categories, categoryId);
+  const ownerId = ownerIdFromOptions(options);
   const blocks = [
     { type: 'section', section: categorySection(client, category) },
     { type: 'separator' },
     text('**Choose another category or go back:**')
   ];
 
-  for (const row of actionRowsForCategory(categories, category)) {
+  for (const row of actionRowsForCategory(categories, category, ownerId)) {
     blocks.push({ type: 'row', row });
   }
 
@@ -312,24 +319,22 @@ function buildHelpCategoryPayload(client, categoryId, options = {}) {
 }
 
 function wireHelpCollector(message, authorId, client, options = {}) {
-  const viewerOptions = { viewerId: authorId };
-  const collector = message.createMessageComponentCollector({ time: options.time || 120000 });
+  const viewerOptions = { viewerId: authorId, ownerId: authorId };
+  const collector = message.createMessageComponentCollector({
+    time: options.time || 120000,
+    filter: (component) => component.user.id === authorId
+  });
 
   collector.on('collect', async (component) => {
-    if (component.user.id !== authorId) {
-      await component.reply({
-        content: "This help menu isn't for you. Please run the help command yourself.",
-        ephemeral: true
-      });
-      return;
-    }
+    const parsed = parseOwnedCustomId(component.customId);
+    if (!parsed || parsed.scope !== 'help') return;
 
-    if (component.customId === 'help_back_home') {
+    if (parsed.action === 'back') {
       await component.update(buildHelpHomePayload(client, viewerOptions));
       return;
     }
 
-    if (component.customId === 'help_category_select') {
+    if (parsed.action === 'category') {
       const categoryId = component.values?.[0];
       await component.update(buildHelpCategoryPayload(client, categoryId, viewerOptions));
     }

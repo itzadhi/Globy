@@ -18,7 +18,7 @@ const { config } = require('../config/env');
 const {
   displayModeDescription,
   displayModeLabel,
-  normalizeDisplayMode
+  parseDisplayModeInput
 } = require('../utils/syncDisplayMode');
 const { resolveChannel, safeReply } = require('./helpers');
 
@@ -29,12 +29,25 @@ function assertSetupPermission(message) {
 }
 
 function parseSetupChannel(message, args) {
-  return resolveChannel(message, args[0]) || message.channel;
+  for (const arg of args) {
+    if (parseDisplayModeInput(arg)) continue;
+    const channel = resolveChannel(message, arg);
+    if (channel) return channel;
+  }
+  return message.channel;
 }
 
-function parseDisplayMode(args, fallback = config.sync.defaultDisplayMode) {
-  const mode = args.find((arg) => ['normal', 'cv2'].includes(String(arg).toLowerCase()));
-  return normalizeDisplayMode(mode, fallback);
+function parseDisplayMode(args) {
+  const mode = args.find((arg) => parseDisplayModeInput(arg));
+  return mode ? parseDisplayModeInput(mode) : null;
+}
+
+function requireDisplayMode(args) {
+  const displayMode = parseDisplayMode(args);
+  if (!displayMode) {
+    throw new Error('Choose a required sync style: `,setchannel [#channel] plain` or `,setchannel [#channel] cv2`.');
+  }
+  return displayMode;
 }
 
 module.exports = [
@@ -42,14 +55,14 @@ module.exports = [
     name: 'setchannel',
     aliases: ['setnet', 'connect'],
     category: 'Sync',
-    usage: 'setchannel [#channel] [normal|cv2]',
+    usage: 'setchannel [#channel] <plain|cv2>',
     description: 'Make a text channel ready for Globy CV2 sync.',
     async execute(message, args) {
       assertSetupPermission(message);
       const channel = parseSetupChannel(message, args);
       const network = config.sync.defaultNetwork;
 
-      if (!channel) throw new Error('Use `,setchannel` or `,setchannel #channel`.');
+      if (!channel) throw new Error('Use `,setchannel plain` or `,setchannel #channel cv2`.');
       if (!isSupportedTextChannel(channel)) throw new Error('Only regular text channels can be connected.');
 
       await message.guild.members.fetchMe().catch(() => null);
@@ -65,7 +78,7 @@ module.exports = [
       });
 
       if (existing) {
-        const displayMode = parseDisplayMode(args, existing.displayMode || config.sync.defaultDisplayMode);
+        const displayMode = requireDisplayMode(args);
         existing.displayMode = displayMode;
         existing.channelName = channel.name;
         existing.guildName = message.guild.name;
@@ -79,7 +92,7 @@ module.exports = [
         return;
       }
 
-      const displayMode = parseDisplayMode(args);
+      const displayMode = requireDisplayMode(args);
 
       await upsertGuild(message.guild);
       await Network.findOneAndUpdate(

@@ -1,7 +1,7 @@
 const MODES = {
-  normal: {
-    value: 'normal',
-    label: 'Normal',
+  plain: {
+    value: 'plain',
+    label: 'Plain',
     description: 'Real user webhook: exact username, avatar, and plain message content.'
   },
   cv2: {
@@ -11,9 +11,22 @@ const MODES = {
   }
 };
 
-function normalizeDisplayMode(value, fallback = 'normal') {
-  const mode = String(value || fallback || 'normal').toLowerCase();
-  return MODES[mode] ? mode : 'normal';
+const MODE_ALIASES = {
+  plain: 'plain',
+  normal: 'plain',
+  simple: 'plain',
+  webhook: 'plain',
+  cv2: 'cv2',
+  card: 'cv2'
+};
+
+function parseDisplayModeInput(value) {
+  const mode = String(value || '').toLowerCase().trim();
+  return MODE_ALIASES[mode] || null;
+}
+
+function normalizeDisplayMode(value, fallback = 'plain') {
+  return parseDisplayModeInput(value) || parseDisplayModeInput(fallback) || 'plain';
 }
 
 function displayModeLabel(value) {
@@ -28,7 +41,7 @@ function displayModeChoices() {
   return Object.values(MODES).map((mode) => ({
     name: mode.value === 'cv2'
       ? 'CV2 Card - bot card with user avatar and username'
-      : 'Normal - exact user webhook username and avatar',
+      : 'Plain - exact user webhook username and avatar',
     value: mode.value
   }));
 }
@@ -38,5 +51,6 @@ module.exports = {
   normalizeDisplayMode,
   displayModeLabel,
   displayModeDescription,
-  displayModeChoices
+  displayModeChoices,
+  parseDisplayModeInput
 };

@@ -46,7 +46,7 @@ CLIENT_ID=your_application_id
 MONGO_URI=your_mongodb_connection_string
 DEV_IDS=your_discord_user_id
 PREFIX=,
-DEFAULT_SYNC_MODE=normal
+DEFAULT_SYNC_MODE=plain
 BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moderation, and recovery.
 THEME_PRIMARY=#B829FF
 THEME_SECONDARY=#35FF95
@@ -107,22 +107,21 @@ Recommended bot permissions:
 Run this in every server/channel you want connected:
 
 ```text
-/setchannel
-/setchannel channel:#global-chat
+/setchannel type:plain channel:#global-chat
 /setchannel type:cv2
 ```
 
 Or with prefix commands:
 
 ```text
-,setchannel
-,setchannel #global-chat
+,setchannel plain
+,setchannel #global-chat plain
 ,setchannel #global-chat cv2
 ```
 
 Messages sent in any connected channel will sync to the others.
 
-Use `normal` for plain user-webhook messages. Use `cv2` for the bot-card style with the sender avatar and username inside a premium card.
+Use `plain` for exact user-webhook messages. Use `cv2` for the bot-card style with the sender avatar and username inside a premium card. The style choice is required when connecting or updating a channel.
 
 Check sync health:
 

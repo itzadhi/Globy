@@ -58,7 +58,7 @@ const config = {
   sync: {
     webhookName: process.env.WEBHOOK_NAME || 'Globy CV2 Sync',
     defaultNetwork: process.env.DEFAULT_NETWORK || 'global',
-    defaultDisplayMode: process.env.DEFAULT_SYNC_MODE || 'normal',
+    defaultDisplayMode: process.env.DEFAULT_SYNC_MODE || 'plain',
     cv2WebhookUsername: process.env.CV2_WEBHOOK_USERNAME,
     queueDelayMs: duration(process.env.SYNC_QUEUE_DELAY, '650ms'),
     recoveryDelayMs: duration(process.env.RECOVERY_BATCH_DELAY, '1200ms'),
