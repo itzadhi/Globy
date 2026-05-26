@@ -19,8 +19,8 @@ The architecture is intentionally simple: commands call services, services use m
 - Supports text, replies, attachments, stickers, emoji, edits, and deletes
 - Stores message recovery data in MongoDB
 - Rebuilds broken webhook messages with `/recovermessages`
-- Tracks global XP, levels, ranks, message counts, and reputation
-- Generates Canvas profile, rank, and leaderboard cards
+- Tracks global XP, levels, and message counts
+- Generates Canvas profile cards
 - Blocks dangerous pings before sync
 - Filters spam, scam patterns, invite links, caps spam, repeat spam, and emoji spam
 - Supports slash commands, comma-prefix commands, and developer-granted no-prefix commands
@@ -40,7 +40,7 @@ src/
 ├── middleware/      Permission checks
 ├── utils/           Text, time, Components V2, logging, and file helpers
 ├── cache/           In-memory cooldown/webhook caches
-├── canvas/          Profile, rank, and leaderboard card renderers
+├── canvas/          Profile card renderers
 └── config/          Environment and emoji config
 ```
 
@@ -79,10 +79,9 @@ BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moder
 THEME_PRIMARY=#B829FF
 THEME_SECONDARY=#35FF95
 THEME_BACKGROUND=#050507
-HELP_BANNER_URL=
 ```
 
-`HELP_BANNER_URL` is optional. If it is empty, the help menu uses the bot avatar as the banner media. The bot still supports advanced optional variables such as `NO_PREFIX_ENABLED`, `WEBHOOK_NAME`, `SYNC_QUEUE_DELAY`, `MESSAGE_SPAM_LIMIT`, `EMOJI_*`, `CV2_WEBHOOK_USERNAME`, and legacy `CANVAS_*` theme values, but you do not need them for a normal setup.
+The bot still supports advanced optional variables such as `NO_PREFIX_ENABLED`, `WEBHOOK_NAME`, `SYNC_QUEUE_DELAY`, `MESSAGE_SPAM_LIMIT`, `EMOJI_*`, `CV2_WEBHOOK_USERNAME`, and legacy `CANVAS_*` theme values, but you do not need them for a normal setup.
 
 No-prefix access is automatic for `DEV_IDS`. Extra users must be granted by a bot developer with `/noprefix add` or `,noprefix add`.
 
@@ -259,8 +258,6 @@ General:
 - `/help`, `,help`
 - `/ping`, `,ping`
 - `/stats`, `,stats`
-- `/userinfo`, `,userinfo`
-- `/serverinfo`, `,serverinfo`
 - `/avatar`, `,avatar`
 - `/invite`, `,invite`
 - `/about`, `,about`
@@ -275,9 +272,6 @@ Sync:
 Profile:
 
 - `/profile`, `,profile`
-- `/rank`, `,rank`
-- `/leaderboard`, `,leaderboard`
-- `/rep`, `,rep`
 
 Moderation:
 
@@ -386,7 +380,7 @@ Synced webhook messages use empty `allowedMentions`, so dangerous mentions canno
 - `Guilds`: server settings and sync state
 - `Networks`: internal routing stats and feature switches
 - `Channels`: connected channels and webhook credentials
-- `Profiles`: XP, level, rank, rep, message counts
+- `Profiles`: XP, level, and message counts
 - `XPs`: XP audit events
 - `ModerationLogs`: blocked messages, actions, webhook failures, recovery logs
 - `Blacklists`: global bans, mutes, warnings

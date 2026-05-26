@@ -26,8 +26,8 @@ const CATEGORY_META = {
     description: 'Connect channels, choose sync style, repair webhooks, and recover messages.'
   },
   Profile: {
-    icon: () => emojis.rank,
-    description: 'Global XP, ranks, reputation, profile cards, and leaderboards.'
+    icon: () => emojis.profile,
+    description: 'Global XP, levels, message counts, and profile cards.'
   },
   Moderation: {
     icon: () => emojis.shield,
@@ -148,10 +148,6 @@ function totalCommandCount(categories) {
   return categories.reduce((sum, category) => sum + category.commands.length, 0);
 }
 
-function bannerUrl(client) {
-  return config.help.bannerUrl || client.user.displayAvatarURL({ extension: 'png', size: 1024 });
-}
-
 function botAvatarUrl(client) {
   return client.user.displayAvatarURL({ extension: 'png', size: 256 });
 }
@@ -269,7 +265,7 @@ function actionRowsForCategory(categories, category) {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('help_back_home')
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Secondary)
         .setLabel('Back to Main Menu')
     )
   ];
@@ -282,8 +278,6 @@ function payloadFlags(ephemeral) {
 function buildHelpHomePayload(client, options = {}) {
   const categories = commandCategories(client);
   const blocks = [
-    { type: 'media', url: bannerUrl(client), description: `${client.user.username} help banner` },
-    { type: 'separator' },
     { type: 'section', section: homeSection(client, categories) },
     { type: 'separator' },
     text('**Choose a category:**')
@@ -304,8 +298,6 @@ function buildHelpCategoryPayload(client, categoryId, options = {}) {
   const categories = commandCategories(client);
   const category = categoryById(categories, categoryId);
   const blocks = [
-    { type: 'media', url: bannerUrl(client), description: `${client.user.username} help banner` },
-    { type: 'separator' },
     { type: 'section', section: categorySection(client, category) },
     { type: 'separator' },
     text('**Choose another category or go back:**')

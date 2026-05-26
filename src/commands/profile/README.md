@@ -1,3 +1,3 @@
 # Profile Commands
 
-Profile commands use the global XP and reputation system. Image responses are generated in `src/canvas`.
+Profile commands use the global XP system. Image responses are generated in `src/canvas`.

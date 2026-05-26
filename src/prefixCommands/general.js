@@ -10,7 +10,7 @@ const MessageLog = require('../models/MessageLog');
 const Blacklist = require('../models/Blacklist');
 const { pingDatabase } = require('../services/databaseService');
 const { buildHelpHomePayload, wireHelpCollector } = require('../services/helpMenuService');
-const { formatDuration, discordTimestamp } = require('../utils/time');
+const { formatDuration } = require('../utils/time');
 const { config } = require('../config/env');
 const { panelPayload } = require('../utils/componentsV2');
 const emojis = require('../config/emojis');
@@ -134,54 +134,6 @@ module.exports = [
     }
   },
   {
-    name: 'userinfo',
-    aliases: ['user', 'ui'],
-    category: 'General',
-    usage: 'userinfo [user]',
-    description: 'Show information about a user.',
-    async execute(message, args) {
-      const user = args[0] ? await resolveUser(message, args[0]) : message.author;
-      if (!user) throw new Error('I could not find that user.');
-
-      const member = await message.guild.members.fetch(user.id).catch(() => null);
-      const embed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(user.tag || user.username)
-        .setThumbnail(user.displayAvatarURL({ extension: 'png', size: 256 }))
-        .addFields(
-          { name: 'User ID', value: user.id, inline: false },
-          { name: 'Created', value: discordTimestamp(user.createdAt, 'D'), inline: true },
-          { name: 'Joined', value: member?.joinedAt ? discordTimestamp(member.joinedAt, 'D') : 'Not in this server', inline: true },
-          { name: 'Bot', value: user.bot ? 'Yes' : 'No', inline: true }
-        );
-
-      await safeReply(message, { embeds: [embed] });
-    }
-  },
-  {
-    name: 'serverinfo',
-    aliases: ['server', 'si'],
-    category: 'General',
-    usage: 'serverinfo',
-    description: 'Show information about this server.',
-    async execute(message) {
-      const guild = message.guild;
-      const owner = await guild.fetchOwner().catch(() => null);
-      const embed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(guild.name)
-        .setThumbnail(guild.iconURL({ size: 256 }))
-        .addFields(
-          { name: 'Owner', value: owner ? owner.user.tag : 'Unknown', inline: true },
-          { name: 'Members', value: `${guild.memberCount}`, inline: true },
-          { name: 'Created', value: discordTimestamp(guild.createdAt, 'D'), inline: true },
-          { name: 'Server ID', value: guild.id, inline: false }
-        );
-
-      await safeReply(message, { embeds: [embed] });
-    }
-  },
-  {
     name: 'invite',
     aliases: ['botinvite'],
     category: 'General',
@@ -215,7 +167,7 @@ module.exports = [
         .setDescription('A premium cross-server Discord communication platform powered by webhooks, synchronized profiles, global moderation, and recovery systems.')
         .addFields(
           { name: 'Sync Engine', value: 'Cross-server webhook sync with edits, deletes, attachments, replies, and recovery.', inline: false },
-          { name: 'Profiles', value: 'Global XP, levels, reputation, ranks, leaderboards, and Canvas cards.', inline: false },
+          { name: 'Profiles', value: 'Global XP, levels, message counts, and Canvas profile cards.', inline: false },
           { name: 'Safety', value: 'Mention protection, spam filters, scam checks, blacklist tools, and moderation logs.', inline: false }
         )
         .setTimestamp();

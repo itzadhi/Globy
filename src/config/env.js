@@ -48,9 +48,6 @@ const config = {
     tagline: process.env.BOT_TAGLINE || packageInfo.description,
     footer: process.env.BOT_FOOTER || packageInfo.name
   },
-  help: {
-    bannerUrl: process.env.HELP_BANNER_URL
-  },
   colors: {
     primary: process.env.EMBED_COLOR || theme.primary,
     success: process.env.SUCCESS_COLOR || '#35FF95',

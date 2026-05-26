@@ -51,7 +51,6 @@ BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moder
 THEME_PRIMARY=#B829FF
 THEME_SECONDARY=#35FF95
 THEME_BACKGROUND=#050507
-HELP_BANNER_URL=
 ```
 
 `DEV_IDS` users automatically get no-prefix access. Bot developers can add extra trusted users later with `/noprefix add` or `,noprefix add @user`.

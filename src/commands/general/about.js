@@ -12,7 +12,7 @@ module.exports = {
     await interaction.reply(infoPanel(`${emojis.globe} Globy CV2`, 'A premium cross-server Discord communication platform powered by webhooks, synchronized profiles, global moderation, and recovery systems.', {
       fields: [
         { name: 'Sync Engine', value: 'Cross-server webhook sync with edits, deletes, attachments, replies, and recovery.' },
-        { name: 'Profiles', value: 'Global XP, levels, reputation, ranks, leaderboards, and Canvas cards.' },
+        { name: 'Profiles', value: 'Global XP, levels, message counts, and Canvas profile cards.' },
         { name: 'Safety', value: 'Mention protection, spam filters, scam checks, blacklist tools, and moderation logs.' }
       ]
     }));
