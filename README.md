@@ -280,8 +280,10 @@ Moderation (bot developers only):
 
 Admin (bot developers only):
 
-- `/noprefix`
-- `,noprefix`
+- `/noprefix`, `,noprefix`
+- `/botguild`, `,botguild`
+
+`/botguild` and `,botguild` can list bot servers, show server details, create an invite for a server the bot is already in, make the bot leave a server, and generate the OAuth link needed to add the bot to a new server. Discord does not allow bots to self-join servers without a user authorizing the OAuth invite.
 
 ## No-Prefix System
 

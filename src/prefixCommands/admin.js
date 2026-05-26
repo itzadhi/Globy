@@ -5,9 +5,19 @@ const {
   listNoPrefixUsers,
   isNoPrefixAllowed
 } = require('../services/noPrefixService');
+const {
+  botInviteUrl,
+  createServerInvite,
+  guildDetails,
+  guildLine,
+  listBotGuilds,
+  resolveBotGuild
+} = require('../services/botGuildService');
 const { isDeveloper } = require('../middleware/permissions');
 const { config } = require('../config/env');
 const emojis = require('../config/emojis');
+const { discordTimestamp } = require('../utils/time');
+const { actionRow, linkButton } = require('../utils/componentsV2');
 const { resolveUser, safeReply, usage } = require('./helpers');
 
 async function assertDeveloper(message) {
@@ -93,6 +103,102 @@ module.exports = [
       }
 
       throw new Error(`${usage(prefix, 'noprefix <status|add|remove|list> [user] [reason]')}`);
+    }
+  },
+  {
+    name: 'botguild',
+    aliases: ['botguilds', 'guilds', 'servers'],
+    category: 'Admin',
+    devOnly: true,
+    usage: 'botguild <list|info|invite|leave|join> [server_id] [reason]',
+    description: 'Manage servers the bot is in. Bot developers only.',
+    async execute(message, args, { prefix }) {
+      const action = (args.shift() || 'list').toLowerCase();
+
+      if (action === 'list') {
+        const limit = Math.min(Math.max(Number(args[0]) || 10, 1), 25);
+        const guilds = listBotGuilds(message.client, limit);
+        const embed = new EmbedBuilder()
+          .setColor(config.colors.primary)
+          .setTitle('Bot Servers')
+          .setDescription(guilds.length ? guilds.map(guildLine).join('\n\n') : 'The bot is not currently cached in any servers.')
+          .addFields({ name: 'Total Cached', value: `${message.client.guilds.cache.size}`, inline: true });
+
+        await safeReply(message, { embeds: [embed] });
+        return;
+      }
+
+      if (action === 'join' || action === 'joinlink') {
+        const url = botInviteUrl(config.clientId);
+        const embed = new EmbedBuilder()
+          .setColor(config.colors.primary)
+          .setTitle('Bot Join Link')
+          .setDescription('Discord bots cannot self-join a server from a command. Use this OAuth link with an account that has permission to add bots.');
+
+        await safeReply(message, {
+          embeds: [embed],
+          components: [actionRow(linkButton('Invite Bot', url))]
+        });
+        return;
+      }
+
+      const guildId = args.shift();
+      if (!guildId) throw new Error(`${usage(prefix, 'botguild <info|invite|leave> <server_id>')}`);
+      const guild = await resolveBotGuild(message.client, guildId);
+
+      if (action === 'info') {
+        const details = await guildDetails(guild);
+        const embed = new EmbedBuilder()
+          .setColor(config.colors.primary)
+          .setTitle(details.name)
+          .setDescription('Server details visible to the bot.')
+          .addFields(
+            { name: 'Server ID', value: details.id, inline: false },
+            { name: 'Owner', value: details.owner, inline: false },
+            { name: 'Members', value: `${details.members}`, inline: true },
+            { name: 'Channels', value: `${details.channels}`, inline: true },
+            { name: 'Roles', value: `${details.roles}`, inline: true },
+            { name: 'Created', value: discordTimestamp(details.createdAt, 'D'), inline: true },
+            { name: 'Bot Joined', value: details.joinedAt ? discordTimestamp(details.joinedAt, 'D') : 'Unknown', inline: true },
+            { name: 'Shard', value: `${details.shardId}`, inline: true }
+          );
+
+        await safeReply(message, { embeds: [embed] });
+        return;
+      }
+
+      if (action === 'invite') {
+        const invite = await createServerInvite(guild, `Invite requested by ${message.author.tag || message.author.username}`);
+        const embed = new EmbedBuilder()
+          .setColor(config.colors.primary)
+          .setTitle('Server Invite Created')
+          .setDescription(`Invite for **${guild.name}**.`)
+          .addFields(
+            { name: 'Server ID', value: guild.id, inline: false },
+            { name: 'Channel', value: invite.vanity ? 'Vanity URL' : invite.channel?.toString() || 'Unknown', inline: true }
+          );
+
+        await safeReply(message, {
+          embeds: [embed],
+          components: [actionRow(linkButton('Open Invite', invite.url))]
+        });
+        return;
+      }
+
+      if (action === 'leave') {
+        const reason = args.join(' ') || `Bot developer ${message.author.tag || message.author.username} requested leave`;
+        const embed = new EmbedBuilder()
+          .setColor(config.colors.success)
+          .setTitle(guild.id === message.guildId ? 'Leaving Current Server' : 'Server Left')
+          .setDescription(`Leaving **${guild.name}** (\`${guild.id}\`).`)
+          .addFields({ name: 'Reason', value: reason, inline: false });
+
+        await safeReply(message, { embeds: [embed] });
+        await guild.leave();
+        return;
+      }
+
+      throw new Error(`${usage(prefix, 'botguild <list|info|invite|leave|join> [server_id] [reason]')}`);
     }
   }
 ];
