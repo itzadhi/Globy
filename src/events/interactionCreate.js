@@ -3,8 +3,6 @@ const { isDeveloper } = require('../middleware/permissions');
 const { errorPanel } = require('../utils/componentsV2');
 const logger = require('../utils/logger');
 
-const developerOnlyCategories = new Set(['Admin', 'Moderation']);
-
 module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction, client) {
@@ -14,7 +12,7 @@ module.exports = {
     if (!command) return;
 
     try {
-      if (developerOnlyCategories.has(command.category) && !isDeveloper(interaction.user.id)) {
+      if (command.devOnly && !isDeveloper(interaction.user.id)) {
         throw new Error('Only configured bot developers can use this command.');
       }
 

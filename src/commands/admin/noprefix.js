@@ -12,6 +12,7 @@ const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Admin',
+  devOnly: true,
   data: new SlashCommandBuilder()
     .setName('noprefix')
     .setDescription('Manage the no-prefix command allowlist.')

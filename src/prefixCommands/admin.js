@@ -21,6 +21,7 @@ module.exports = [
     name: 'noprefix',
     aliases: ['np'],
     category: 'Admin',
+    devOnly: true,
     usage: 'noprefix <status|add|remove|list> [user] [reason]',
     description: 'Manage users who can run commands without the comma prefix.',
     async execute(message, args, { prefix }) {

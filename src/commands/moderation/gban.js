@@ -8,6 +8,7 @@ const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Moderation',
+  devOnly: true,
   data: new SlashCommandBuilder()
     .setName('gban')
     .setDescription('Globally ban a user from Globy CV2 synced chat.')

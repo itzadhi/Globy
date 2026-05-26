@@ -5,8 +5,6 @@ const { isNoPrefixAllowed } = require('./noPrefixService');
 const { errorPanel } = require('../utils/componentsV2');
 const logger = require('../utils/logger');
 
-const developerOnlyCategories = new Set(['Admin', 'Moderation']);
-
 function tokenize(input) {
   const matches = String(input || '').match(/"[^"]+"|'[^']+'|\S+/g) || [];
   return matches.map((item) => item.replace(/^["']|["']$/g, ''));
@@ -96,7 +94,7 @@ async function handlePrefixCommand(message, client) {
   cooldownCache.set(cooldownKey, true, command.cooldown || 2);
 
   try {
-    if (developerOnlyCategories.has(command.category) && !isDeveloper(message.author.id)) {
+    if (command.devOnly && !isDeveloper(message.author.id)) {
       throw new Error('Only configured bot developers can use this command.');
     }
 

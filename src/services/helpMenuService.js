@@ -32,8 +32,7 @@ const CATEGORY_META = {
 };
 
 const CATEGORY_ORDER = ['General', 'Sync', 'Moderation', 'Admin'];
-const hiddenHelpCategories = new Set(['Profile']);
-const developerOnlyCategories = new Set(['Moderation', 'Admin']);
+const excludedHelpCategories = new Set(['Profile']);
 
 function inviteUrl(clientId) {
   const permissions = [
@@ -77,8 +76,8 @@ function commandCategories(client, options = {}) {
     if (!data?.name) continue;
 
     const category = command.category || 'General';
-    if (hiddenHelpCategories.has(category)) continue;
-    if (developerOnlyCategories.has(category) && !viewerIsDeveloper) continue;
+    if (excludedHelpCategories.has(category)) continue;
+    if (command.devOnly && !viewerIsDeveloper) continue;
     if (!grouped.has(category)) grouped.set(category, []);
 
     const matchingPrefix = prefixMap.get(data.name);
@@ -94,8 +93,8 @@ function commandCategories(client, options = {}) {
   for (const command of prefixMap.values()) {
     if (seen.has(command.name)) continue;
     const category = command.category || 'General';
-    if (hiddenHelpCategories.has(category)) continue;
-    if (developerOnlyCategories.has(category) && !viewerIsDeveloper) continue;
+    if (excludedHelpCategories.has(category)) continue;
+    if (command.devOnly && !viewerIsDeveloper) continue;
     if (!grouped.has(category)) grouped.set(category, []);
 
     grouped.get(category).push({
@@ -311,7 +310,7 @@ function buildHelpCategoryPayload(client, categoryId, options = {}) {
 }
 
 function wireHelpCollector(message, authorId, client, options = {}) {
-  const viewerOptions = { ...options, viewerId: authorId };
+  const viewerOptions = { viewerId: authorId };
   const collector = message.createMessageComponentCollector({ time: options.time || 120000 });
 
   collector.on('collect', async (component) => {

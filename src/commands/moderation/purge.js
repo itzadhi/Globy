@@ -6,6 +6,7 @@ const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Moderation',
+  devOnly: true,
   data: new SlashCommandBuilder()
     .setName('purge')
     .setDescription('Bulk-delete recent messages from this channel.')
