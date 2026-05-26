@@ -36,7 +36,12 @@ function safePayload(payload, options = {}) {
     delete next.files;
   }
 
+  if (options.useFallbackContent && payload.fallbackComponents) {
+    next.components = payload.fallbackComponents;
+  }
+
   delete next.fallbackContent;
+  delete next.fallbackComponents;
 
   return next;
 }
@@ -128,7 +133,7 @@ async function editMessage(syncChannel, discordChannel, webhookMessageId, payloa
   let client = await resolveWebhook(syncChannel, discordChannel);
 
   try {
-    return await client.editMessage(webhookMessageId, safePayload(payload, { dropFiles: true }));
+    return await client.editMessage(webhookMessageId, safePayload(payload, { dropFiles: true, useFallbackContent: true }));
   } catch (error) {
     await logWebhookFailure(syncChannel, error.message, { code: error.code, webhookMessageId });
     if (!isRecoverableWebhookError(error)) throw error;

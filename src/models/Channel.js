@@ -10,6 +10,7 @@ const channelSchema = new mongoose.Schema(
     webhookId: { type: String },
     webhookToken: { type: String },
     webhookName: { type: String },
+    displayMode: { type: String, enum: ['normal', 'cv2'], default: 'normal', index: true },
     active: { type: Boolean, default: true, index: true },
     createdBy: { type: String },
     lastSyncAt: { type: Date },

@@ -1,8 +1,13 @@
 const { createCanvas, loadImage } = require('canvas');
 const { calculateProgress } = require('../services/profileService');
+const { config } = require('../config/env');
 
 const WIDTH = 900;
 const HEIGHT = 360;
+
+function canvasColor(name, fallback) {
+  return config.canvas?.[name] || fallback;
+}
 
 function roundRect(ctx, x, y, width, height, radius) {
   ctx.beginPath();
@@ -24,13 +29,13 @@ function fillRoundRect(ctx, x, y, width, height, radius, fillStyle) {
 
 function drawBackground(ctx, width, height) {
   const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, '#07111F');
-  gradient.addColorStop(0.45, '#101827');
-  gradient.addColorStop(1, '#081B24');
+  gradient.addColorStop(0, canvasColor('background', '#050507'));
+  gradient.addColorStop(0.56, '#101014');
+  gradient.addColorStop(1, '#07120D');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.strokeStyle = 'rgba(0, 229, 255, 0.12)';
+  ctx.strokeStyle = `${canvasColor('accentPrimary', '#FF2ACF')}22`;
   ctx.lineWidth = 1;
   for (let x = -height; x < width; x += 36) {
     ctx.beginPath();
@@ -63,11 +68,11 @@ function drawCircleAvatar(ctx, image, x, y, size, label) {
     ctx.drawImage(image, x, y, size, size);
   } else {
     const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
-    gradient.addColorStop(0, '#00E5FF');
-    gradient.addColorStop(1, '#35FF95');
+    gradient.addColorStop(0, canvasColor('accentPrimary', '#FF2ACF'));
+    gradient.addColorStop(1, canvasColor('accentSecondary', '#35FF95'));
     ctx.fillStyle = gradient;
     ctx.fillRect(x, y, size, size);
-    ctx.fillStyle = '#07111F';
+    ctx.fillStyle = canvasColor('background', '#050507');
     ctx.font = 'bold 44px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -75,7 +80,10 @@ function drawCircleAvatar(ctx, image, x, y, size, label) {
   }
 
   ctx.restore();
-  ctx.strokeStyle = '#00E5FF';
+  const ring = ctx.createLinearGradient(x, y, x + size, y + size);
+  ring.addColorStop(0, canvasColor('accentPrimary', '#FF2ACF'));
+  ring.addColorStop(1, canvasColor('accentSecondary', '#35FF95'));
+  ctx.strokeStyle = ring;
   ctx.lineWidth = 5;
   ctx.beginPath();
   ctx.arc(x + size / 2, y + size / 2, size / 2 + 3, 0, Math.PI * 2);
@@ -86,18 +94,18 @@ function drawProgressBar(ctx, x, y, width, height, percent) {
   fillRoundRect(ctx, x, y, width, height, height / 2, 'rgba(255, 255, 255, 0.12)');
   const fillWidth = Math.max(height, Math.floor(width * (percent / 100)));
   const gradient = ctx.createLinearGradient(x, y, x + width, y);
-  gradient.addColorStop(0, '#00E5FF');
-  gradient.addColorStop(1, '#35FF95');
+  gradient.addColorStop(0, canvasColor('accentPrimary', '#FF2ACF'));
+  gradient.addColorStop(1, canvasColor('accentSecondary', '#35FF95'));
   fillRoundRect(ctx, x, y, fillWidth, height, height / 2, gradient);
 }
 
 function drawMetric(ctx, label, value, x, y) {
   fillRoundRect(ctx, x, y, 150, 74, 10, 'rgba(255, 255, 255, 0.08)');
-  ctx.fillStyle = '#93A4B8';
+  ctx.fillStyle = canvasColor('muted', '#A6ABB7');
   ctx.font = '16px Arial';
   ctx.textAlign = 'center';
   ctx.fillText(label, x + 75, y + 25);
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = canvasColor('text', '#FFFFFF');
   ctx.font = 'bold 24px Arial';
   ctx.fillText(String(value), x + 75, y + 56);
 }
@@ -129,11 +137,11 @@ async function createProfileCard(user, profile, rank = null) {
   drawCircleAvatar(ctx, avatar, 76, 84, 156, profile.username);
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = canvasColor('text', '#FFFFFF');
   ctx.font = 'bold 42px Arial';
   ctx.fillText(profile.globalName || profile.username, 270, 112);
 
-  ctx.fillStyle = '#93A4B8';
+  ctx.fillStyle = canvasColor('muted', '#A6ABB7');
   ctx.font = '20px Arial';
   ctx.fillText(`@${profile.username}`, 272, 148);
   ctx.fillText('Globy CV2 Global Profile', 272, 182);
@@ -147,7 +155,7 @@ async function createProfileCard(user, profile, rank = null) {
   ctx.fillText(`${progress.xp} / ${progress.required} XP`, 272, 319);
   drawProgressBar(ctx, 272, 328, 540, 18, progress.percent);
 
-  ctx.fillStyle = 'rgba(0, 229, 255, 0.95)';
+  ctx.fillStyle = canvasColor('accentPrimary', '#FF2ACF');
   ctx.font = 'bold 18px Arial';
   ctx.textAlign = 'right';
   ctx.fillText(`${profile.messageCount || 0} synced messages`, 812, 318);
@@ -168,17 +176,17 @@ async function createLeaderboardCard(entries) {
   drawBackground(ctx, 1000, height);
   fillRoundRect(ctx, 34, 34, 932, height - 68, 18, 'rgba(3, 9, 18, 0.78)');
 
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = canvasColor('text', '#FFFFFF');
   ctx.font = 'bold 42px Arial';
   ctx.textAlign = 'left';
   ctx.fillText('Global Leaderboard', 70, 92);
 
-  ctx.fillStyle = '#93A4B8';
+  ctx.fillStyle = canvasColor('muted', '#A6ABB7');
   ctx.font = '18px Arial';
   ctx.fillText('Top synchronized profiles across every connected server', 72, 124);
 
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#35FF95';
+  ctx.fillStyle = canvasColor('accentSecondary', '#35FF95');
   ctx.font = 'bold 20px Arial';
   ctx.fillText(`${entries.length} ranked users`, 930, 94);
 
@@ -195,7 +203,7 @@ async function createLeaderboardCard(entries) {
 
     fillRoundRect(ctx, 70, y - 44, 860, 66, 10, rowColor);
 
-    ctx.fillStyle = entry.rank === 1 ? '#35FF95' : '#00E5FF';
+    ctx.fillStyle = entry.rank === 1 ? canvasColor('accentSecondary', '#35FF95') : canvasColor('accentPrimary', '#FF2ACF');
     ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(`#${entry.rank}`, 112, y - 5);
@@ -203,10 +211,10 @@ async function createLeaderboardCard(entries) {
     drawCircleAvatar(ctx, avatar, 156, y - 33, 48, entry.username);
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = canvasColor('text', '#FFFFFF');
     fitText(ctx, entry.globalName || entry.username, 220, y - 12, 300, 'bold 23px Arial', entry.username);
 
-    ctx.fillStyle = '#93A4B8';
+    ctx.fillStyle = canvasColor('muted', '#A6ABB7');
     ctx.font = '17px Arial';
     ctx.fillText(`@${entry.username}`, 220, y + 13);
 
@@ -224,7 +232,44 @@ async function createLeaderboardCard(entries) {
   return canvas.toBuffer('image/png');
 }
 
-async function createSetupBanner(client, channel) {
+async function createHelpBanner(client, options = {}) {
+  const canvas = createCanvas(1000, 300);
+  const ctx = canvas.getContext('2d');
+  const botAvatar = await loadRemoteImage(client.user.displayAvatarURL({ extension: 'png', size: 256 }));
+  const title = options.title || client.user.username;
+  const eyebrow = options.eyebrow || 'MAIN MENU';
+  const commandCount = options.commandCount || 0;
+
+  drawBackground(ctx, 1000, 300);
+  fillRoundRect(ctx, 34, 34, 932, 232, 18, 'rgba(0, 0, 0, 0.72)');
+  fillRoundRect(ctx, 34, 34, 8, 232, 0, canvasColor('accentPrimary', '#FF2ACF'));
+  drawCircleAvatar(ctx, botAvatar, 78, 78, 144, client.user.username);
+
+  const glow = ctx.createRadialGradient(620, 140, 20, 620, 140, 300);
+  glow.addColorStop(0, `${canvasColor('accentPrimary', '#FF2ACF')}44`);
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(200, 40, 720, 220);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = canvasColor('accentPrimary', '#FF2ACF');
+  ctx.font = 'bold 18px Arial';
+  ctx.fillText(String(eyebrow).toUpperCase(), 260, 100);
+
+  ctx.fillStyle = canvasColor('text', '#FFFFFF');
+  ctx.font = 'bold 54px Georgia';
+  fitText(ctx, title, 260, 156, 560, 'bold 54px Georgia', client.user.username);
+
+  ctx.fillStyle = canvasColor('muted', '#A6ABB7');
+  ctx.font = 'bold 17px Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${commandCount} COMMANDS`, 910, 212);
+
+  drawProgressBar(ctx, 260, 230, 560, 10, 100);
+  return canvas.toBuffer('image/png');
+}
+
+async function createSetupBanner(client, channel, modeLabel = 'Normal') {
   const canvas = createCanvas(1000, 300);
   const ctx = canvas.getContext('2d');
   const botAvatar = await loadRemoteImage(client.user.displayAvatarURL({ extension: 'png', size: 256 }));
@@ -234,11 +279,11 @@ async function createSetupBanner(client, channel) {
   drawCircleAvatar(ctx, botAvatar, 70, 74, 150, client.user.username);
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#35FF95';
+  ctx.fillStyle = canvasColor('accentSecondary', '#35FF95');
   ctx.font = 'bold 24px Arial';
   ctx.fillText('SYNC READY', 260, 92);
 
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = canvasColor('text', '#FFFFFF');
   ctx.font = 'bold 42px Arial';
   fitText(ctx, `#${channel.name}`, 260, 142, 580, 'bold 42px Arial', channel.name);
 
@@ -246,9 +291,9 @@ async function createSetupBanner(client, channel) {
   ctx.font = '22px Arial';
   ctx.fillText('Globy CV2 will start syncing messages from this channel now.', 262, 184);
 
-  ctx.fillStyle = '#93A4B8';
+  ctx.fillStyle = canvasColor('muted', '#A6ABB7');
   ctx.font = '18px Arial';
-  ctx.fillText('Ready to send and receive global chat messages.', 262, 222);
+  ctx.fillText(`Ready to send and receive global chat messages. Style: ${modeLabel}.`, 262, 222);
 
   drawProgressBar(ctx, 260, 240, 620, 12, 100);
   return canvas.toBuffer('image/png');
@@ -258,5 +303,6 @@ module.exports = {
   createProfileCard,
   createRankCard,
   createLeaderboardCard,
+  createHelpBanner,
   createSetupBanner
 };

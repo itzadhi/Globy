@@ -2,7 +2,7 @@ const SyncChannel = require('../models/Channel');
 const Network = require('../models/Network');
 const MessageLog = require('../models/MessageLog');
 const queue = require('./queueService');
-const { buildPayloadFromLog, relayToTarget } = require('./syncService');
+const { buildPayloadFromLog, prepareAttachmentPayload, relayToTarget } = require('./syncService');
 const { config } = require('../config/env');
 
 function hasHealthyCopy(logRecord, targetChannelId) {
@@ -34,7 +34,9 @@ async function recoverNetwork(client, options) {
   };
 
   for (const logRecord of logs) {
-    const payload = await buildPayloadFromLog(logRecord.toObject());
+    const logObject = logRecord.toObject();
+    const attachmentPayload = await prepareAttachmentPayload(logObject);
+
     for (const target of targets) {
       if (target.channelId === logRecord.sourceChannelId) {
         summary.skipped += 1;
@@ -49,6 +51,11 @@ async function recoverNetwork(client, options) {
 
       try {
         await queue.enqueue(`recover:${network}:${target.channelId}`, async () => {
+          const payload = await buildPayloadFromLog(logObject, {
+            client,
+            displayMode: target.displayMode,
+            attachmentPayload
+          });
           await relayToTarget(client, target, logRecord, payload, 'recovered');
         }, config.sync.recoveryDelayMs);
         summary.recovered += 1;

@@ -1,12 +1,15 @@
 const {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
+  AttachmentBuilder,
   ComponentType,
   MessageFlags,
-  SlashCommandBuilder
+  SlashCommandBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder
 } = require('discord.js');
+const { createHelpBanner } = require('../../canvas/cardRenderer');
 const { componentEmoji, container, text } = require('../../utils/componentsV2');
+const { config } = require('../../config/env');
 const emojis = require('../../config/emojis');
 
 const categories = [
@@ -14,7 +17,7 @@ const categories = [
     id: 'general',
     label: 'General',
     iconKey: 'spark',
-    description: 'Status, info, invite, and utility commands.',
+    description: 'Status, info, invite, and everyday bot utilities.',
     commands: [
       { name: '/ping', prefix: ',ping', value: 'Latency, database status, websocket ping, and uptime.' },
       { name: '/stats', prefix: ',stats', value: 'Global platform counters.' },
@@ -29,9 +32,9 @@ const categories = [
     id: 'sync',
     label: 'Sync',
     iconKey: 'link',
-    description: 'Connect channels, repair webhooks, and recover synced messages.',
+    description: 'Connect channels, pick message style, repair webhooks, and recover sync.',
     commands: [
-      { name: '/setchannel', prefix: ',setchannel or ,setchannel #channel', value: 'Make this channel, or a chosen channel, ready for global sync.' },
+      { name: '/setchannel', prefix: ',setchannel #channel cv2', value: 'Connect a channel. Choose `normal` or `cv2` style.' },
       { name: '/removechannel', prefix: ',removechannel #channel', value: 'Disconnect a channel from sync.' },
       { name: '/synchealth', prefix: ',synchealth #channel repair', value: 'Check and repair channel/webhook health.' },
       { name: '/recovermessages', prefix: ',recovermessages 25 force', value: 'Restore missing webhook messages from MongoDB logs.' }
@@ -77,111 +80,84 @@ const categories = [
   }
 ];
 
-const pageSize = 5;
-
 function categoryById(id) {
   return categories.find((category) => category.id === id) || categories[0];
 }
 
-function categoryRow(activeId) {
+function totalCommands() {
+  return categories.reduce((total, category) => total + category.commands.length, 0);
+}
+
+function runtimeCommandCount(client) {
+  const prefixUnique = client.prefixCommands
+    ? new Set([...client.prefixCommands.values()].map((command) => command.name)).size
+    : 0;
+  return Math.max(client.commands?.size || 0, prefixUnique) || totalCommands();
+}
+
+function categorySelect(activeId) {
   return new ActionRowBuilder().addComponents(
-    categories.map((category) =>
-      new ButtonBuilder()
-        .setCustomId(`help_category:${category.id}`)
-        .setStyle(category.id === activeId ? ButtonStyle.Primary : ButtonStyle.Secondary)
-        .setEmoji(componentEmoji(emojis[category.iconKey]))
-        .setLabel(category.label)
-        .setDisabled(category.id === activeId)
-    )
+    new StringSelectMenuBuilder()
+      .setCustomId('help_category')
+      .setPlaceholder('Select a category...')
+      .addOptions(
+        categories.map((category) =>
+          new StringSelectMenuOptionBuilder()
+            .setLabel(category.label)
+            .setValue(category.id)
+            .setDescription(category.description.slice(0, 100))
+            .setEmoji(componentEmoji(emojis[category.iconKey]))
+            .setDefault(category.id === activeId)
+        )
+      )
   );
 }
 
-function navigationRow(category, page, maxPage) {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('help_home')
-      .setStyle(ButtonStyle.Secondary)
-      .setEmoji(componentEmoji(emojis.spark))
-      .setLabel('Home'),
-    new ButtonBuilder()
-      .setCustomId('help_previous')
-      .setStyle(ButtonStyle.Secondary)
-      .setEmoji(componentEmoji('◀️'))
-      .setLabel('Previous')
-      .setDisabled(page === 0),
-    new ButtonBuilder()
-      .setCustomId('help_next')
-      .setStyle(ButtonStyle.Secondary)
-      .setEmoji(componentEmoji('▶️'))
-      .setLabel('Next')
-      .setDisabled(page === maxPage),
-    new ButtonBuilder()
-      .setCustomId('help_close')
-      .setStyle(ButtonStyle.Danger)
-      .setEmoji(componentEmoji(emojis.warn))
-      .setLabel('Close')
-  );
+function commandList(category) {
+  return category.commands
+    .map((command) => [
+      `- **${command.name}**`,
+      `  \`${command.prefix}\``,
+      `  ${command.value}`
+    ].join('\n'))
+    .join('\n');
 }
 
-function renderCommandList(category, page) {
-  const maxPage = Math.max(0, Math.ceil(category.commands.length / pageSize) - 1);
-  const safePage = Math.min(Math.max(page, 0), maxPage);
-  const commands = category.commands.slice(safePage * pageSize, safePage * pageSize + pageSize);
-
-  return {
-    safePage,
-    maxPage,
-    content: commands
-      .map((command) => [
-        `### ${command.name}`,
-        `\`${command.prefix}\``,
-        command.value
-      ].join('\n'))
-      .join('\n\n')
-  };
-}
-
-function render(state) {
+async function render(client, state) {
   const category = categoryById(state.categoryId);
-  const list = renderCommandList(category, state.page);
   const categoryIcon = emojis[category.iconKey] || emojis.spark;
+  const banner = await createHelpBanner(client, {
+    title: category.id === 'general' ? client.user.username : category.label.toUpperCase(),
+    eyebrow: category.id === 'general' ? 'Main Menu' : 'Category',
+    commandCount: runtimeCommandCount(client)
+  });
 
   const panel = container({
     blocks: [
+      { type: 'media', url: 'attachment://globy-help.png', description: `${client.user.username} help banner` },
       text([
-        `# ${emojis.spark} Globy CV2 Command Center`,
-        `${categoryIcon} **${category.label}** — ${category.description}`,
+        `## ${categoryIcon} ${category.label}`,
+        `Hello, I'm **${client.user.username}** - a cross-server sync bot with webhook chat, Canvas profiles, recovery, and safety tools.`,
         '',
-        '**Fast start:** run `/setchannel` in the chat channel, then send a message. No extra IDs needed.'
+        '**System Info**',
+        `- Prefix: \`${config.commands.prefix}\``,
+        `- Commands: **${runtimeCommandCount(client)}**`,
+        `- Latency: **${client.ws.ping}ms**`,
+        '',
+        '**Select a category below to get started.**'
       ].join('\n')),
       { type: 'separator' },
-      text(list.content),
+      text(commandList(category)),
       { type: 'separator', divider: false },
-      { type: 'row', row: categoryRow(category.id) },
-      { type: 'row', row: navigationRow(category, list.safePage, list.maxPage) },
-      { type: 'separator', divider: false },
-      text(`Page **${list.safePage + 1}/${list.maxPage + 1}** • Slash, comma-prefix, and developer-granted no-prefix commands are supported.`)
+      { type: 'row', row: categorySelect(category.id) }
     ]
   });
 
   return {
     components: [panel],
+    files: [new AttachmentBuilder(banner, { name: 'globy-help.png' })],
     flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
-    state: {
-      categoryId: category.id,
-      page: list.safePage
-    }
-  };
-}
-
-function closedView() {
-  return {
-    components: [
-      container({
-        blocks: [text(`# ${emojis.spark} Help Closed\nRun \`/help\` again whenever you need the command center.`)]
-      })
-    ],
-    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+    state: { categoryId: category.id }
   };
 }
 
@@ -189,21 +165,22 @@ module.exports = {
   category: 'General',
   data: new SlashCommandBuilder()
     .setName('help')
-    .setDescription('Open the interactive Globy CV2 command center.'),
+    .setDescription('Open the visual Globy CV2 command center.'),
 
   async execute(interaction) {
-    let state = { categoryId: 'general', page: 0 };
-    const initial = render(state);
+    let state = { categoryId: 'general' };
+    const initial = await render(interaction.client, state);
     state = initial.state;
 
     const response = await interaction.reply({
       components: initial.components,
+      files: initial.files,
       flags: initial.flags,
       fetchReply: true
     });
 
     const collector = response.createMessageComponentCollector({
-      componentType: ComponentType.Button,
+      componentType: ComponentType.StringSelect,
       time: 180000
     });
 
@@ -216,28 +193,14 @@ module.exports = {
         return;
       }
 
-      if (component.customId === 'help_close') {
-        collector.stop('closed');
-        await component.update(closedView());
-        return;
-      }
-
-      if (component.customId.startsWith('help_category:')) {
-        state.categoryId = component.customId.split(':')[1];
-        state.page = 0;
-      } else if (component.customId === 'help_home') {
-        state.categoryId = 'general';
-        state.page = 0;
-      } else if (component.customId === 'help_previous') {
-        state.page -= 1;
-      } else if (component.customId === 'help_next') {
-        state.page += 1;
-      }
-
-      const view = render(state);
+      state.categoryId = component.values[0] || 'general';
+      const view = await render(interaction.client, state);
       state = view.state;
+
       await component.update({
         components: view.components,
+        files: view.files,
+        attachments: [],
         flags: MessageFlags.IsComponentsV2
       });
     });

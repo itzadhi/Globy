@@ -45,9 +45,18 @@ const config = {
   sync: {
     webhookName: process.env.WEBHOOK_NAME || 'Globy CV2 Sync',
     defaultNetwork: process.env.DEFAULT_NETWORK || 'global',
+    defaultDisplayMode: process.env.DEFAULT_SYNC_MODE || 'normal',
+    cv2WebhookUsername: process.env.CV2_WEBHOOK_USERNAME,
     queueDelayMs: duration(process.env.SYNC_QUEUE_DELAY, '650ms'),
     recoveryDelayMs: duration(process.env.RECOVERY_BATCH_DELAY, '1200ms'),
     maxRecoveryLimit: number(process.env.MAX_RECOVERY_LIMIT, 100)
+  },
+  canvas: {
+    background: process.env.CANVAS_BACKGROUND || '#050507',
+    accentPrimary: process.env.CANVAS_ACCENT_PRIMARY || '#FF2ACF',
+    accentSecondary: process.env.CANVAS_ACCENT_SECONDARY || '#35FF95',
+    text: process.env.CANVAS_TEXT || '#FFFFFF',
+    muted: process.env.CANVAS_MUTED || '#A6ABB7'
   },
   moderation: {
     toxicWords: list(process.env.TOXIC_WORDS).map((word) => word.toLowerCase()),

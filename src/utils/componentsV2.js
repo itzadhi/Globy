@@ -3,6 +3,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ContainerBuilder,
+  MediaGalleryBuilder,
+  MediaGalleryItemBuilder,
   MessageFlags,
   SeparatorBuilder,
   SeparatorSpacingSize,
@@ -24,6 +26,12 @@ function separator(divider = true) {
   return new SeparatorBuilder()
     .setDivider(divider)
     .setSpacing(SeparatorSpacingSize.Small);
+}
+
+function mediaGallery(url, description) {
+  const item = new MediaGalleryItemBuilder().setURL(url);
+  if (description) item.setDescription(description);
+  return new MediaGalleryBuilder().addItems(item);
 }
 
 function componentEmoji(value, fallback = '✨') {
@@ -54,6 +62,10 @@ function container({ accentColor = null, blocks = [] } = {}) {
       panel.addSeparatorComponents(separator(block.divider));
     } else if (block.type === 'row') {
       panel.addActionRowComponents(block.row);
+    } else if (block.type === 'media') {
+      panel.addMediaGalleryComponents(mediaGallery(block.url, block.description));
+    } else if (block.type === 'section') {
+      panel.addSectionComponents(block.section);
     } else {
       panel.addTextDisplayComponents(block);
     }
@@ -150,6 +162,7 @@ function actionRow(...components) {
 module.exports = {
   text,
   separator,
+  mediaGallery,
   componentEmoji,
   container,
   panelPayload,

@@ -1,6 +1,8 @@
+const { MessageFlags, SectionBuilder, ThumbnailBuilder } = require('discord.js');
 const SyncChannel = require('../models/Channel');
 const Network = require('../models/Network');
 const MessageLog = require('../models/MessageLog');
+const Profile = require('../models/Profile');
 const { addMessageXp } = require('./profileService');
 const { getActiveRestriction } = require('./blacklistService');
 const { inspectMessage, warnAndMaybeDelete } = require('./moderationService');
@@ -9,6 +11,9 @@ const queue = require('./queueService');
 const { logBlockedMessage } = require('./loggingService');
 const { upsertGuild, upsertUser } = require('./guildService');
 const emojis = require('../config/emojis');
+const { config } = require('../config/env');
+const { container, text } = require('../utils/componentsV2');
+const { normalizeDisplayMode } = require('../utils/syncDisplayMode');
 const { buildWebhookUsername, truncate, sanitizeMentions, sanitizeMessageMentions } = require('../utils/text');
 const logger = require('../utils/logger');
 
@@ -143,12 +148,84 @@ function buildContentFromLog(log, uploadedUrls = []) {
   return truncate(lines.join('\n'), 1950);
 }
 
-async function buildPayloadFromLog(log) {
-  const { files, uploadedUrls } = await filePayloads(log);
+async function getAuthorProfile(log) {
+  if (!log.authorId) return null;
+  if (Profile.db.readyState !== 1) return null;
+  return Profile.findOne({ userId: log.authorId })
+    .select('level totalXp reputation messageCount')
+    .lean()
+    .catch(() => null);
+}
+
+function botWebhookIdentity(client) {
+  return {
+    username: truncate(config.sync.cv2WebhookUsername || client?.user?.username || 'Globy CV2', 80),
+    avatarURL: client?.user?.displayAvatarURL?.({ extension: 'png', size: 256 })
+  };
+}
+
+function exactAuthorUsername(log) {
+  return sanitizeMentions(log.authorUsername || log.authorDisplayName || 'Unknown User');
+}
+
+function cv2Card(log, client, uploadedUrls, profile) {
+  const body = buildContentFromLog(log, uploadedUrls) || '*No text content*';
+  const exactUsername = exactAuthorUsername(log);
+  const displayName = sanitizeMentions(log.authorDisplayName || log.authorUsername || 'Unknown User');
+  const level = Number.isFinite(profile?.level) ? profile.level : 0;
+  const authorContent = [
+    `### ${emojis.profile} ${displayName} x Level ${level}`,
+    `\`@${exactUsername}\``,
+    '',
+    body
+  ].join('\n');
+
+  let authorBlock = text(authorContent);
+  if (log.authorAvatar) {
+    const section = new SectionBuilder().addTextDisplayComponents(text(authorContent));
+    section.setThumbnailAccessory(new ThumbnailBuilder().setURL(log.authorAvatar));
+    authorBlock = { type: 'section', section };
+  }
+
+  return container({
+    blocks: [
+      text(`### ${emojis.globe} ${client?.user?.username || 'Globy CV2'} Global Chat`),
+      authorBlock,
+      { type: 'separator', divider: false },
+      text([
+        `${emojis.spark} Sent by \`${exactUsername}\``,
+        `${emojis.link} ${sanitizeMentions(log.sourceGuildName || 'Unknown Server')} | #${sanitizeMentions(log.sourceChannelName || 'chat')}`
+      ].join('\n'))
+    ]
+  });
+}
+
+async function buildPayloadFromLog(log, options = {}) {
+  const displayMode = normalizeDisplayMode(options.displayMode, config.sync.defaultDisplayMode);
+  const attachmentPayload = options.attachmentPayload || (options.includeFiles === false
+    ? { files: [], uploadedUrls: [] }
+    : await filePayloads(log));
+  const files = options.includeFiles === false ? [] : attachmentPayload.files;
+  const uploadedUrls = options.includeFiles === false ? [] : attachmentPayload.uploadedUrls;
+
+  if (displayMode === 'cv2') {
+    const profile = await getAuthorProfile(log);
+    const identity = botWebhookIdentity(options.client);
+
+    return {
+      ...identity,
+      content: '',
+      fallbackContent: '',
+      components: [cv2Card(log, options.client, uploadedUrls, profile)],
+      fallbackComponents: [cv2Card(log, options.client, [], profile)],
+      flags: MessageFlags.IsComponentsV2,
+      files
+    };
+  }
 
   return {
     username: buildWebhookUsername(
-      { displayName: log.authorDisplayName || log.authorUsername },
+      { displayName: log.authorUsername || log.authorDisplayName },
       { username: log.authorUsername },
       ''
     ),
@@ -279,7 +356,6 @@ async function handleMessageCreate(message) {
   await addMessageXp(message, sourceChannel.network);
   const reply = await getReplyData(message);
   const logRecord = await createMessageLog(message, sourceChannel, inspection, reply);
-  const payload = await buildPayloadFromLog(logRecord.toObject());
 
   const targets = await SyncChannel.find({
     network: sourceChannel.network,
@@ -288,6 +364,9 @@ async function handleMessageCreate(message) {
   }).lean();
 
   if (!targets.length) return;
+
+  const logObject = logRecord.toObject();
+  const attachmentPayload = await filePayloads(logObject);
 
   await Network.updateOne(
     { name: sourceChannel.network },
@@ -310,9 +389,14 @@ async function handleMessageCreate(message) {
 
   await Promise.allSettled(
     targets.map((target) =>
-      queue.enqueue(`sync:${sourceChannel.network}:${target.channelId}`, () =>
-        relayToTarget(message.client, target, logRecord, payload)
-      )
+      queue.enqueue(`sync:${sourceChannel.network}:${target.channelId}`, async () => {
+        const payload = await buildPayloadFromLog(logObject, {
+          client: message.client,
+          displayMode: target.displayMode,
+          attachmentPayload
+        });
+        return relayToTarget(message.client, target, logRecord, payload);
+      })
     )
   );
 }
@@ -350,8 +434,7 @@ async function handleMessageUpdate(oldMessage, newMessage) {
   logRecord.status = 'edited';
   logRecord.editedAt = new Date();
   await logRecord.save();
-
-  const payload = await buildPayloadFromLog(logRecord.toObject());
+  const logObject = logRecord.toObject();
 
   await Promise.allSettled(
     logRecord.webhookMessages
@@ -364,6 +447,11 @@ async function handleMessageUpdate(oldMessage, newMessage) {
           const discordChannel = await message.client.channels.fetch(entry.channelId).catch(() => null);
           if (!discordChannel?.isTextBased?.()) return;
 
+          const payload = await buildPayloadFromLog(logObject, {
+            client: message.client,
+            displayMode: target.displayMode,
+            includeFiles: false
+          });
           await webhookService.editMessage(target, discordChannel, entry.webhookMessageId, payload);
           await MessageLog.updateOne(
             { _id: logRecord._id, 'webhookMessages.webhookMessageId': entry.webhookMessageId },
@@ -440,6 +528,7 @@ async function handleMessageDelete(message) {
 
 module.exports = {
   buildPayloadFromLog,
+  prepareAttachmentPayload: filePayloads,
   relayToTarget,
   handleMessageCreate,
   handleMessageUpdate,

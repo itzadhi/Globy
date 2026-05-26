@@ -16,6 +16,11 @@ const {
 const { createSetupBanner } = require('../canvas/cardRenderer');
 const { config } = require('../config/env');
 const emojis = require('../config/emojis');
+const {
+  displayModeDescription,
+  displayModeLabel,
+  normalizeDisplayMode
+} = require('../utils/syncDisplayMode');
 const { resolveChannel, safeReply } = require('./helpers');
 
 function assertSetupPermission(message) {
@@ -28,12 +33,17 @@ function parseSetupChannel(message, args) {
   return resolveChannel(message, args[0]) || message.channel;
 }
 
+function parseDisplayMode(args, fallback = config.sync.defaultDisplayMode) {
+  const mode = args.find((arg) => ['normal', 'cv2'].includes(String(arg).toLowerCase()));
+  return normalizeDisplayMode(mode, fallback);
+}
+
 module.exports = [
   {
     name: 'setchannel',
     aliases: ['setnet', 'connect'],
     category: 'Sync',
-    usage: 'setchannel [#channel]',
+    usage: 'setchannel [#channel] [normal|cv2]',
     description: 'Make a text channel ready for Globy CV2 sync.',
     async execute(message, args) {
       assertSetupPermission(message);
@@ -56,8 +66,21 @@ module.exports = [
       });
 
       if (existing) {
-        throw new Error(`${channel} is already connected and ready to sync.`);
+        const displayMode = parseDisplayMode(args, existing.displayMode || config.sync.defaultDisplayMode);
+        existing.displayMode = displayMode;
+        existing.channelName = channel.name;
+        existing.guildName = message.guild.name;
+        await existing.save();
+
+        const banner = await createSetupBanner(message.client, channel, displayModeLabel(displayMode));
+        await safeReply(message, {
+          content: `${channel} is already connected. Style updated to **${displayModeLabel(displayMode)}**.`,
+          files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })]
+        });
+        return;
       }
+
+      const displayMode = parseDisplayMode(args);
 
       await upsertGuild(message.guild);
       await Network.findOneAndUpdate(
@@ -80,6 +103,7 @@ module.exports = [
             network,
             channelName: channel.name,
             guildName: message.guild.name,
+            displayMode,
             active: true,
             createdBy: message.author.id
           }
@@ -92,9 +116,9 @@ module.exports = [
       await Network.updateOne({ name: network }, { $set: { channelCount: activeCount } });
       await Guild.updateOne({ guildId: message.guildId }, { $addToSet: { networks: network } });
 
-      const banner = await createSetupBanner(message.client, channel);
+      const banner = await createSetupBanner(message.client, channel, displayModeLabel(displayMode));
       await safeReply(message, {
-        content: `${channel} is ready. Start chatting and Globy CV2 will sync it.`,
+        content: `${channel} is ready with **${displayModeLabel(displayMode)}** style. ${displayModeDescription(displayMode)}`,
         files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })]
       });
     }

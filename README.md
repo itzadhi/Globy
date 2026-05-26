@@ -82,6 +82,15 @@ PREFIX=,
 NO_PREFIX_ENABLED=true
 ```
 
+Sync style defaults:
+
+```text
+DEFAULT_SYNC_MODE=normal
+CV2_WEBHOOK_USERNAME=
+```
+
+Use `CV2_WEBHOOK_USERNAME` only when you want the CV2 card webhook name to differ from the bot's live Discord username.
+
 No-prefix access is automatic for `DEV_IDS`. Extra users must be granted by a bot developer with `/noprefix add` or `,noprefix add`.
 
 Never commit `.env`. It is ignored by Git.
@@ -173,6 +182,7 @@ Slash:
 ```text
 /setchannel
 /setchannel channel:#global-chat
+/setchannel type:cv2
 ```
 
 Prefix:
@@ -180,9 +190,33 @@ Prefix:
 ```text
 ,setchannel
 ,setchannel #global-chat
+,setchannel #global-chat cv2
 ```
 
 Run the same setup command in each server/channel you want connected. There is no extra routing argument to type.
+
+## Sync Display Styles
+
+Each connected channel can choose its own message style:
+
+- `normal`: synced messages use the real sender username and avatar as the webhook identity, then show only the message content.
+- `cv2`: synced messages use the bot identity and show a premium Components V2 card with the sender avatar, exact username, level, message, attachments, and source channel info.
+
+Slash examples:
+
+```text
+/setchannel type:normal
+/setchannel type:cv2
+```
+
+Prefix examples:
+
+```text
+,setchannel normal
+,setchannel cv2
+```
+
+Running `/setchannel` again on an already connected channel updates the style instead of making you remove and reconnect it.
 
 ## Sync Health
 
@@ -309,6 +343,8 @@ For each connected channel, Globy CV2:
 5. Sends synced messages through the target channel webhook.
 6. Stores every webhook message ID for edits, deletes, and recovery.
 7. Recreates broken webhooks when Discord reports deleted/invalid webhook errors.
+
+The receiving channel's selected style controls the webhook payload. One server can keep `normal` while another server receives the same synced chat in `cv2` card style.
 
 Attachments are uploaded when small enough. If upload fails or the file is too large, Globy CV2 keeps the sync alive and includes clean attachment links instead of failing the whole webhook send.
 

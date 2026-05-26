@@ -2,6 +2,7 @@ const SyncChannel = require('../models/Channel');
 const MessageLog = require('../models/MessageLog');
 const { missingBotPermissions, permissionNames } = require('../middleware/permissions');
 const webhookService = require('./webhookService');
+const { displayModeLabel } = require('../utils/syncDisplayMode');
 
 async function getSyncHealth(client, discordChannel, options = {}) {
   const syncChannel = await SyncChannel.findOne({
@@ -54,6 +55,7 @@ async function getSyncHealth(client, discordChannel, options = {}) {
     missing,
     fields: [
       { name: 'Connected', value: 'Yes' },
+      { name: 'Sync Style', value: displayModeLabel(syncChannel.displayMode) },
       { name: 'Target Channels', value: `${targets}` },
       { name: 'Webhook', value: webhookStatus },
       { name: 'Bot Permissions', value: missing.length ? `Missing: ${permissionNames(missing).join(', ')}` : 'OK' },

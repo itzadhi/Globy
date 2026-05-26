@@ -12,6 +12,12 @@ const {
 } = require('../../middleware/permissions');
 const { createSetupBanner } = require('../../canvas/cardRenderer');
 const { config } = require('../../config/env');
+const {
+  displayModeChoices,
+  displayModeDescription,
+  displayModeLabel,
+  normalizeDisplayMode
+} = require('../../utils/syncDisplayMode');
 
 module.exports = {
   category: 'Sync',
@@ -24,6 +30,13 @@ module.exports = {
         .setDescription('The text channel to connect. Defaults to this channel.')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(false)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('type')
+        .setDescription('How synced messages should look in this channel.')
+        .addChoices(...displayModeChoices())
+        .setRequired(false)
     ),
 
   async execute(interaction, client) {
@@ -35,6 +48,7 @@ module.exports = {
 
     const channel = interaction.options.getChannel('channel') || interaction.channel;
     const network = config.sync.defaultNetwork;
+    const requestedDisplayMode = interaction.options.getString('type');
 
     if (!isSupportedTextChannel(channel)) {
       throw new Error('Only regular text channels can be connected.');
@@ -53,8 +67,22 @@ module.exports = {
     });
 
     if (existing) {
-      throw new Error(`${channel} is already connected and ready to sync.`);
+      const displayMode = normalizeDisplayMode(requestedDisplayMode, existing.displayMode || config.sync.defaultDisplayMode);
+      existing.displayMode = displayMode;
+      existing.channelName = channel.name;
+      existing.guildName = interaction.guild.name;
+      await existing.save();
+
+      const banner = await createSetupBanner(client, channel, displayModeLabel(displayMode));
+      await interaction.editReply({
+        content: `${channel} is already connected. Style updated to **${displayModeLabel(displayMode)}**.`,
+        files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })],
+        allowedMentions: { parse: [], users: [], roles: [] }
+      });
+      return;
     }
+
+    const displayMode = normalizeDisplayMode(requestedDisplayMode, config.sync.defaultDisplayMode);
 
     await upsertGuild(interaction.guild);
     await Network.findOneAndUpdate(
@@ -79,6 +107,7 @@ module.exports = {
           network,
           channelName: channel.name,
           guildName: interaction.guild.name,
+          displayMode,
           active: true,
           createdBy: interaction.user.id
         }
@@ -91,9 +120,9 @@ module.exports = {
     await Network.updateOne({ name: network }, { $set: { channelCount: activeCount } });
     await Guild.updateOne({ guildId: interaction.guildId }, { $addToSet: { networks: network } });
 
-    const banner = await createSetupBanner(client, channel);
+    const banner = await createSetupBanner(client, channel, displayModeLabel(displayMode));
     await interaction.editReply({
-      content: `${channel} is ready. Start chatting and Globy CV2 will sync it.`,
+      content: `${channel} is ready with **${displayModeLabel(displayMode)}** style. ${displayModeDescription(displayMode)}`,
       files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })],
       allowedMentions: { parse: [], users: [], roles: [] }
     });

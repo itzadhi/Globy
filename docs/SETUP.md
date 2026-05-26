@@ -45,6 +45,7 @@ Useful command settings:
 ```text
 PREFIX=,
 NO_PREFIX_ENABLED=true
+DEFAULT_SYNC_MODE=normal
 ```
 
 `DEV_IDS` users automatically get no-prefix access. Bot developers can add extra trusted users later with `/noprefix add` or `,noprefix add @user`.
@@ -103,6 +104,7 @@ Run this in every server/channel you want connected:
 ```text
 /setchannel
 /setchannel channel:#global-chat
+/setchannel type:cv2
 ```
 
 Or with prefix commands:
@@ -110,9 +112,12 @@ Or with prefix commands:
 ```text
 ,setchannel
 ,setchannel #global-chat
+,setchannel #global-chat cv2
 ```
 
 Messages sent in any connected channel will sync to the others.
+
+Use `normal` for plain user-webhook messages. Use `cv2` for the bot-card style with the sender avatar and username inside a premium card.
 
 Check sync health:
 
