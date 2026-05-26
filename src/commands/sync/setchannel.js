@@ -21,9 +21,9 @@ module.exports = {
     .addChannelOption((option) =>
       option
         .setName('channel')
-        .setDescription('The text channel to connect.')
+        .setDescription('The text channel to connect. Defaults to this channel.')
         .addChannelTypes(ChannelType.GuildText)
-        .setRequired(true)
+        .setRequired(false)
     ),
 
   async execute(interaction, client) {
@@ -33,7 +33,7 @@ module.exports = {
       throw new Error('Only the server owner or users with Administrator permission can configure synced channels.');
     }
 
-    const channel = interaction.options.getChannel('channel');
+    const channel = interaction.options.getChannel('channel') || interaction.channel;
     const network = config.sync.defaultNetwork;
 
     if (!isSupportedTextChannel(channel)) {

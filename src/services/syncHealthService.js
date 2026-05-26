@@ -57,7 +57,7 @@ async function getSyncHealth(client, discordChannel, options = {}) {
       { name: 'Target Channels', value: `${targets}` },
       { name: 'Webhook', value: webhookStatus },
       { name: 'Bot Permissions', value: missing.length ? `Missing: ${permissionNames(missing).join(', ')}` : 'OK' },
-      { name: 'Logged Network Messages', value: `${loggedMessages}` },
+      { name: 'Logged Sync Messages', value: `${loggedMessages}` },
       { name: 'Failed Copies In This Channel', value: `${failedCopies}` },
       { name: 'Stored Failure Count', value: `${syncChannel.failureCount || 0}` }
     ]

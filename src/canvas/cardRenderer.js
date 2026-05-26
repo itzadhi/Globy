@@ -175,7 +175,7 @@ async function createLeaderboardCard(entries) {
 
   ctx.fillStyle = '#93A4B8';
   ctx.font = '18px Arial';
-  ctx.fillText('Top synchronized profiles across every Globy CV2 network', 72, 124);
+  ctx.fillText('Top synchronized profiles across every connected server', 72, 124);
 
   ctx.textAlign = 'right';
   ctx.fillStyle = '#35FF95';

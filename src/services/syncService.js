@@ -9,7 +9,7 @@ const queue = require('./queueService');
 const { logBlockedMessage } = require('./loggingService');
 const { upsertGuild, upsertUser } = require('./guildService');
 const emojis = require('../config/emojis');
-const { buildWebhookUsername, truncate, sanitizeMentions } = require('../utils/text');
+const { buildWebhookUsername, truncate, sanitizeMentions, sanitizeMessageMentions } = require('../utils/text');
 const logger = require('../utils/logger');
 
 function attachmentRecords(message) {
@@ -51,8 +51,11 @@ async function downloadAttachmentFile(attachment) {
     if (!buffer.length || buffer.length > 8 * 1024 * 1024) return null;
 
     return {
-      attachment: buffer,
-      name: safeFileName(attachment.name)
+      file: {
+        attachment: buffer,
+        name: safeFileName(attachment.name)
+      },
+      sourceUrl: attachment.url
     };
   } catch {
     return null;
@@ -63,16 +66,22 @@ async function downloadAttachmentFile(attachment) {
 
 async function filePayloads(messageOrLog) {
   const files = [];
+  const uploadedUrls = [];
+
   for (const attachment of (messageOrLog.attachments || []).slice(0, 5)) {
-    const file = await downloadAttachmentFile(attachment);
-    if (file) files.push(file);
+    const uploaded = await downloadAttachmentFile(attachment);
+    if (uploaded?.file) {
+      files.push(uploaded.file);
+      if (uploaded.sourceUrl) uploadedUrls.push(uploaded.sourceUrl);
+    }
   }
 
-  return files;
+  return { files, uploadedUrls };
 }
 
-function attachmentLines(log) {
-  const attachments = log.attachments || [];
+function attachmentLines(log, uploadedUrls = []) {
+  const uploaded = new Set(uploadedUrls.filter(Boolean));
+  const attachments = (log.attachments || []).filter((attachment) => !uploaded.has(attachment.url));
   if (!attachments.length) return [];
 
   return [
@@ -99,11 +108,11 @@ async function getReplyData(message) {
     messageId: replied.id,
     authorId: replied.author?.id,
     authorName: replied.member?.displayName || replied.author?.username || 'Unknown User',
-    contentPreview: truncate(sanitizeMentions(replied.content || '[attachment]'), 120)
+    contentPreview: truncate(sanitizeMessageMentions(replied, replied.content || '[attachment]'), 120)
   };
 }
 
-function buildContentFromLog(log) {
+function buildContentFromLog(log, uploadedUrls = []) {
   const lines = [];
   const pushBlock = (value) => {
     if (lines.length) lines.push('');
@@ -122,7 +131,7 @@ function buildContentFromLog(log) {
     pushBlock(log.stickers.map((sticker) => `${emojis.spark} Sticker: ${sanitizeMentions(sticker.name)}`).join('\n'));
   }
 
-  const attachments = attachmentLines(log);
+  const attachments = attachmentLines(log, uploadedUrls);
   if (attachments.length) {
     pushBlock(attachments.join('\n'));
   }
@@ -135,6 +144,8 @@ function buildContentFromLog(log) {
 }
 
 async function buildPayloadFromLog(log) {
+  const { files, uploadedUrls } = await filePayloads(log);
+
   return {
     username: buildWebhookUsername(
       { displayName: log.authorDisplayName || log.authorUsername },
@@ -142,8 +153,9 @@ async function buildPayloadFromLog(log) {
       ''
     ),
     avatarURL: log.authorAvatar,
-    content: buildContentFromLog(log),
-    files: await filePayloads(log)
+    content: buildContentFromLog(log, uploadedUrls),
+    fallbackContent: buildContentFromLog(log),
+    files
   };
 }
 

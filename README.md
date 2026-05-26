@@ -25,6 +25,7 @@ The architecture is intentionally simple: commands call services, services use m
 - Filters spam, scam patterns, invite links, caps spam, repeat spam, and emoji spam
 - Supports slash commands, comma-prefix commands, and developer-granted no-prefix commands
 - Uses Discord Components V2 panels without colored sidebars for command UI
+- Preloads commands, webhook cache, Canvas, and custom emoji at startup
 
 ## Folder Map
 
@@ -170,16 +171,18 @@ Only the server owner or a user with Administrator permission can connect channe
 Slash:
 
 ```text
+/setchannel
 /setchannel channel:#global-chat
 ```
 
 Prefix:
 
 ```text
+,setchannel
 ,setchannel #global-chat
 ```
 
-Run the same setup command in each server/channel you want connected. There is no public network argument to type.
+Run the same setup command in each server/channel you want connected. There is no extra routing argument to type.
 
 ## Sync Health
 
@@ -256,6 +259,7 @@ Moderation:
 - `/gmute`, `,gmute`
 - `/gunmute`, `,gunmute`
 - `/gwarn`, `,gwarn`
+- `/purge`, `,purge`
 
 Admin:
 
@@ -307,6 +311,27 @@ For each connected channel, Globy CV2:
 7. Recreates broken webhooks when Discord reports deleted/invalid webhook errors.
 
 Attachments are uploaded when small enough. If upload fails or the file is too large, Globy CV2 keeps the sync alive and includes clean attachment links instead of failing the whole webhook send.
+
+When uploads succeed, attachments are not repeated as extra link text. If an upload fails, the same message falls back to safe link-only attachment output.
+
+## Custom Emoji and Preloading
+
+Set `EMOJI_GUILD_ID` to the server that stores your Globy emoji. At startup, the bot fetches that server's emoji and tries to match common names like `globe`, `shield`, `spark`, `rank`, `link`, `recover`, `ping`, and `profile`.
+
+You can still force exact emoji by setting values such as:
+
+```text
+EMOJI_GLOBE=<:globe:123456789012345678>
+EMOJI_SHIELD=<:shield:123456789012345678>
+```
+
+Startup preloading warms:
+
+- Slash command registry
+- Prefix and no-prefix command registry
+- Saved webhook credentials from MongoDB
+- Custom emoji from `EMOJI_GUILD_ID`
+- Canvas renderer for cards
 
 ## Moderation and Safety
 

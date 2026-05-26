@@ -3,6 +3,7 @@ const {
   createRestriction,
   liftRestriction
 } = require('../services/blacklistService');
+const { assertPurgePermissions, purgeMessages } = require('../services/purgeService');
 const { canUseGlobalModeration } = require('../middleware/permissions');
 const { discordTimestamp } = require('../utils/time');
 const { config } = require('../config/env');
@@ -80,6 +81,55 @@ async function liftCommand(message, args, context, type) {
 }
 
 module.exports = [
+  {
+    name: 'purge',
+    aliases: ['clear', 'prune'],
+    category: 'Moderation',
+    usage: 'purge <amount> [@user] [reason]',
+    description: 'Bulk-delete recent messages from this channel.',
+    async execute(message, args, { prefix }) {
+      await message.guild.members.fetchMe().catch(() => null);
+      assertPurgePermissions(message.member, message.channel);
+
+      const amount = Number(args.shift());
+      if (!Number.isFinite(amount) || amount < 1 || amount > 100) {
+        throw new Error(`${usage(prefix, 'purge <1-100> [@user] [reason]')}`);
+      }
+
+      let user = null;
+      if (args[0]) {
+        const resolved = await resolveUser(message, args[0]);
+        if (resolved) {
+          user = resolved;
+          args.shift();
+        }
+      }
+
+      const reason = args.join(' ') || 'No reason provided';
+      const result = await purgeMessages({
+        channel: message.channel,
+        amount,
+        user,
+        moderator: message.author,
+        reason,
+        excludeIds: [message.id]
+      });
+
+      const embed = new EmbedBuilder()
+        .setColor(config.colors.success)
+        .setTitle(`${emojis.shield} Purge Complete`)
+        .setDescription(`Deleted **${result.deleted}** recent message${result.deleted === 1 ? '' : 's'} from this channel.`)
+        .addFields(
+          { name: 'Requested', value: `${result.requested}`, inline: true },
+          { name: 'Deleted', value: `${result.deleted}`, inline: true },
+          { name: 'Filter', value: user ? `${user.tag || user.username}` : 'All users', inline: true },
+          { name: 'Reason', value: reason, inline: false }
+        );
+
+      const reply = await safeReply(message, { embeds: [embed] });
+      setTimeout(() => reply.delete().catch(() => null), 8000);
+    }
+  },
   {
     name: 'gban',
     aliases: ['globalban'],

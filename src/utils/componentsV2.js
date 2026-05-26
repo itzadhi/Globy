@@ -26,6 +26,21 @@ function separator(divider = true) {
     .setSpacing(SeparatorSpacingSize.Small);
 }
 
+function componentEmoji(value, fallback = '✨') {
+  const textValue = String(value || fallback).trim();
+  const custom = textValue.match(/^<(a?):([A-Za-z0-9_]{2,32}):(\d{17,22})>$/);
+
+  if (custom) {
+    return {
+      animated: custom[1] === 'a',
+      name: custom[2],
+      id: custom[3]
+    };
+  }
+
+  return { name: textValue || fallback };
+}
+
 function container({ accentColor = null, blocks = [] } = {}) {
   const panel = new ContainerBuilder();
   if (accentColor && process.env.COMPONENT_SIDEBARS === 'true') {
@@ -135,6 +150,7 @@ function actionRow(...components) {
 module.exports = {
   text,
   separator,
+  componentEmoji,
   container,
   panelPayload,
   successPanel,

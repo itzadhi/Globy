@@ -27,6 +27,35 @@ function sanitizeMentions(content) {
     .replace(/<#(\d+)>/g, '#channel');
 }
 
+function safeDisplayName(value, fallback) {
+  return truncate(String(value || fallback || 'user').replace(/[\r\n<>`]/g, ' ').replace(/\s+/g, ' ').trim(), 80) || fallback;
+}
+
+function sanitizeMessageMentions(message, content = message?.content || '') {
+  let safe = String(content || '')
+    .replace(/@everyone/gi, '`@everyone`')
+    .replace(/@here/gi, '`@here`');
+
+  for (const [id, user] of message.mentions?.users || []) {
+    const member = message.mentions?.members?.get(id);
+    const name = safeDisplayName(member?.displayName || user.globalName || user.username, 'user');
+    safe = safe.replace(new RegExp(`<@!?${id}>`, 'g'), `@${name}`);
+  }
+
+  for (const [id, role] of message.mentions?.roles || []) {
+    safe = safe.replace(new RegExp(`<@&${id}>`, 'g'), `@${safeDisplayName(role.name, 'role')}`);
+  }
+
+  for (const [id, channel] of message.mentions?.channels || []) {
+    safe = safe.replace(new RegExp(`<#${id}>`, 'g'), `#${safeDisplayName(channel.name, 'channel')}`);
+  }
+
+  return safe
+    .replace(/<@&(\d+)>/g, '[role mention]')
+    .replace(/<@!?(\d+)>/g, '@user')
+    .replace(/<#(\d+)>/g, '#channel');
+}
+
 function findDangerousMentions(message) {
   const reasons = [];
   const everyoneMentioned = message.mentions?.everyone;
@@ -58,6 +87,7 @@ module.exports = {
   normalizeNetworkName,
   isValidNetworkName,
   sanitizeMentions,
+  sanitizeMessageMentions,
   findDangerousMentions,
   buildWebhookUsername,
   stripMarkdown,

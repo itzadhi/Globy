@@ -1,7 +1,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 const { config } = require('../config/env');
 const { cooldownCache, fingerprintCache } = require('../cache/runtimeCache');
-const { findDangerousMentions, sanitizeMentions, compactWhitespace, truncate } = require('../utils/text');
+const { findDangerousMentions, sanitizeMessageMentions, compactWhitespace, truncate } = require('../utils/text');
 
 const INVITE_PATTERN = /(discord\.gg|discord(?:app)?\.com\/invite)\/[a-z0-9-]+/i;
 const SCAM_PATTERNS = [
@@ -76,7 +76,7 @@ async function inspectMessage(message, network, options = {}) {
   if (countSpam && repeatedMessageCheck(message, network)) reasons.push('repeated message');
 
   const allowed = reasons.length === 0;
-  const sanitizedContent = truncate(sanitizeMentions(content), 1700);
+  const sanitizedContent = truncate(sanitizeMessageMentions(message, content), 1700);
 
   return {
     allowed,

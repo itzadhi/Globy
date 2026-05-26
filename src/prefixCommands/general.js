@@ -243,7 +243,7 @@ module.exports = [
         .setTitle(`${emojis.globe} Globy CV2`)
         .setDescription('A premium cross-server Discord communication platform powered by webhooks, synchronized profiles, global moderation, and recovery systems.')
         .addFields(
-          { name: 'Sync Engine', value: 'Network-based webhook sync with edits, deletes, attachments, replies, and recovery.', inline: false },
+          { name: 'Sync Engine', value: 'Cross-server webhook sync with edits, deletes, attachments, replies, and recovery.', inline: false },
           { name: 'Profiles', value: 'Global XP, levels, reputation, ranks, leaderboards, and Canvas cards.', inline: false },
           { name: 'Safety', value: 'Mention protection, spam filters, scam checks, blacklist tools, and moderation logs.', inline: false }
         )

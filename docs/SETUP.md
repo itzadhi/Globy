@@ -96,17 +96,19 @@ Recommended bot permissions:
 - Read Message History
 - Manage Messages
 
-## 7. First Network
+## 7. First Sync Channel
 
 Run this in every server/channel you want connected:
 
 ```text
+/setchannel
 /setchannel channel:#global-chat
 ```
 
 Or with prefix commands:
 
 ```text
+,setchannel
 ,setchannel #global-chat
 ```
 

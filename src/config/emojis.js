@@ -11,6 +11,6 @@ module.exports = {
   rank: emoji('RANK', '🏆'),
   link: emoji('LINK', '🔗'),
   recover: emoji('RECOVER', '♻️'),
-  ping: '🏓',
-  profile: '👤'
+  ping: emoji('PING', '🏓'),
+  profile: emoji('PROFILE', '👤')
 };

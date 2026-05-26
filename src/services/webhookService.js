@@ -23,7 +23,7 @@ function isRecoverableWebhookError(error) {
 function safePayload(payload, options = {}) {
   const next = {
     ...payload,
-    content: truncate(payload.content || '', 1950),
+    content: truncate(options.useFallbackContent ? payload.fallbackContent || payload.content || '' : payload.content || '', 1950),
     allowedMentions: {
       parse: [],
       users: [],
@@ -35,6 +35,8 @@ function safePayload(payload, options = {}) {
   if (options.dropFiles) {
     delete next.files;
   }
+
+  delete next.fallbackContent;
 
   return next;
 }
@@ -106,7 +108,7 @@ async function sendMessage(syncChannel, discordChannel, payload) {
 
     if (payload.files?.length) {
       try {
-        return await client.send(safePayload(payload, { dropFiles: true }));
+        return await client.send(safePayload(payload, { dropFiles: true, useFallbackContent: true }));
       } catch (filelessError) {
         await logWebhookFailure(syncChannel, filelessError.message, {
           code: filelessError.code,
