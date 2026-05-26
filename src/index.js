@@ -6,7 +6,7 @@ const {
 } = require('discord.js');
 const { config, requireRuntimeConfig } = require('./config/env');
 const { connectDatabase, pingDatabase } = require('./services/databaseService');
-const { loadCommands } = require('./handlers/commandHandler');
+const { loadCommands, loadPrefixCommands } = require('./handlers/commandHandler');
 const { loadEvents } = require('./handlers/eventHandler');
 const logger = require('./utils/logger');
 
@@ -55,6 +55,7 @@ async function main() {
   });
 
   loadCommands(client);
+  loadPrefixCommands(client);
   loadEvents(client);
 
   await connectDatabase();

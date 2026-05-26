@@ -57,6 +57,26 @@ npm start
 | Sync | `/setchannel`, `/removechannel`, `/networkinfo`, `/recovermessages` |
 | Profile | `/profile`, `/rank`, `/leaderboard`, `/rep` |
 | Moderation | `/gban`, `/gunban`, `/gmute`, `/gunmute`, `/gwarn` |
+| Admin | `/noprefix` |
+
+## Prefix Commands
+
+Globy CV2 also supports lightweight message commands. The default prefix is a comma:
+
+```text
+,ping
+,help
+,setchannel #global-chat global
+```
+
+Trusted users can be allowed to run commands without the prefix:
+
+```text
+ping
+help sync
+```
+
+Developers listed in `DEV_IDS` automatically have no-prefix access. Additional users can be added with `/noprefix add` or `,noprefix add @user`.
 
 ## Connecting Channels
 
@@ -80,6 +100,9 @@ Important variables:
 - `CLIENT_ID`: Discord application client ID
 - `MONGO_URI`: MongoDB connection string
 - `DEV_IDS`: bot developer IDs, comma-separated
+- `PREFIX`: message command prefix, default `,`
+- `NO_PREFIX_ENABLED`: enables trusted no-prefix commands
+- `NO_PREFIX_IDS`: optional comma-separated user IDs with no-prefix access
 - `TOXIC_WORDS`: optional comma-separated moderation list
 - `EMOJI_*`: optional custom emoji markup for premium UI
 

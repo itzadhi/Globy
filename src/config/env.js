@@ -31,6 +31,11 @@ const config = {
   emojiGuildId: process.env.EMOJI_GUILD_ID,
   nodeEnv: process.env.NODE_ENV || 'development',
   port: number(process.env.PORT, 3000),
+  commands: {
+    prefix: process.env.PREFIX || ',',
+    noPrefixEnabled: process.env.NO_PREFIX_ENABLED !== 'false',
+    noPrefixIds: list(process.env.NO_PREFIX_IDS)
+  },
   colors: {
     primary: process.env.EMBED_COLOR || '#00E5FF',
     success: process.env.SUCCESS_COLOR || '#35FF95',

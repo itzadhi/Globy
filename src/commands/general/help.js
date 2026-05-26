@@ -40,6 +40,7 @@ const categories = {
     { name: '/rep', value: 'Give reputation to another user.' }
   ],
   Admin: [
+    { name: '/noprefix', value: 'Manage users who can run commands without the comma prefix.' },
     { name: 'Required setup permission', value: 'Server Owner or Administrator.' },
     { name: 'Required bot permissions', value: 'Manage Webhooks, Send Messages, Embed Links, Attach Files, Read Message History, View Channel.' },
     { name: 'Safety defaults', value: 'Dangerous mentions are blocked before sync and webhook sends use empty allowed mentions.' }

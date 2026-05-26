@@ -40,6 +40,16 @@ Copy-Item .env.example .env
 
 Fill `.env` with your private values.
 
+Useful command settings:
+
+```text
+PREFIX=,
+NO_PREFIX_ENABLED=true
+NO_PREFIX_IDS=
+```
+
+`DEV_IDS` users automatically get no-prefix access. Add extra trusted users later with `/noprefix add` or `,noprefix add @user`.
+
 ## 4. Deploy Slash Commands
 
 ```bash
@@ -83,6 +93,12 @@ Run this in every server/channel you want connected:
 
 ```text
 /setchannel channel:#global-chat network:global
+```
+
+Or with prefix commands:
+
+```text
+,setchannel #global-chat global
 ```
 
 Messages sent in any connected `global` channel will sync to the others.
