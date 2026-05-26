@@ -4,7 +4,7 @@
   <img src="docs/assets/adhi-profile.jpeg" width="140" alt="Adhi profile">
 </p>
 
-Globy CV2 is a production-oriented Discord cross-server communication bot. Server admins choose a channel, and Globy CV2 immediately starts mirroring messages across every connected channel using Discord webhooks.
+Globy CV2 is a production-oriented Discord cross-server communication bot. Server admins choose a channel, and immediately starts mirroring messages across every connected channel using Discord webhooks.
 
 Created by **Adhi** (`itzadhi`). If this project helps you, please star the repository and follow `itzadhi` to support more scalable Discord bot projects.
 
