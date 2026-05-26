@@ -38,14 +38,20 @@ On Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-Fill `.env` with your private values.
-
-Useful command settings:
+Fill `.env` with your private values. The normal setup only needs:
 
 ```text
+DISCORD_TOKEN=your_bot_token
+CLIENT_ID=your_application_id
+MONGO_URI=your_mongodb_connection_string
+DEV_IDS=your_discord_user_id
 PREFIX=,
-NO_PREFIX_ENABLED=true
 DEFAULT_SYNC_MODE=normal
+BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moderation, and recovery.
+THEME_PRIMARY=#B829FF
+THEME_SECONDARY=#35FF95
+THEME_BACKGROUND=#050507
+HELP_BANNER_URL=
 ```
 
 `DEV_IDS` users automatically get no-prefix access. Bot developers can add extra trusted users later with `/noprefix add` or `,noprefix add @user`.

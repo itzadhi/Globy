@@ -9,6 +9,7 @@ const Profile = require('../models/Profile');
 const MessageLog = require('../models/MessageLog');
 const Blacklist = require('../models/Blacklist');
 const { pingDatabase } = require('../services/databaseService');
+const { buildHelpHomePayload, wireHelpCollector } = require('../services/helpMenuService');
 const { formatDuration, discordTimestamp } = require('../utils/time');
 const { config } = require('../config/env');
 const { panelPayload } = require('../utils/componentsV2');
@@ -20,46 +21,16 @@ const {
   safeReply
 } = require('./helpers');
 
-function uniqueCommands(client) {
-  const commands = new Map();
-  for (const command of client.prefixCommands.values()) {
-    commands.set(command.name, command);
-  }
-  return [...commands.values()];
-}
-
 module.exports = [
   {
     name: 'help',
     aliases: ['commands', 'h'],
     category: 'General',
-    usage: 'help [category]',
-    description: 'Show prefix command help.',
-    async execute(message, args, { prefix }) {
-      const category = args[0]?.toLowerCase();
-      const commands = uniqueCommands(message.client);
-      const categories = [...new Set(commands.map((command) => command.category || 'Other'))].sort();
-      const selected = categories.find((name) => name.toLowerCase() === category) || null;
-      const visible = selected ? commands.filter((command) => command.category === selected) : commands;
-
-      const embed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(`${emojis.spark} Globy CV2 Prefix Help`)
-        .setDescription(
-          selected
-            ? `Category: **${selected}**`
-            : `Prefix: \`${prefix}\`\nNo-prefix is available to trusted users.\nCategories: ${categories.map((name) => `\`${name.toLowerCase()}\``).join(', ')}`
-        )
-        .addFields(
-          visible.slice(0, 25).map((command) => ({
-            name: `${prefix}${command.usage || command.name}`,
-            value: command.description || 'No description provided.',
-            inline: false
-          }))
-        )
-        .setFooter({ text: `Try ${prefix}help sync or ${prefix}help moderation` });
-
-      await safeReply(message, { embeds: [embed] });
+    usage: 'help',
+    description: 'Open the interactive Globy CV2 help menu.',
+    async execute(message) {
+      const reply = await safeReply(message, buildHelpHomePayload(message.client));
+      wireHelpCollector(reply, message.author.id, message.client);
     }
   },
   {

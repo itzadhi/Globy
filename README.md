@@ -66,30 +66,23 @@ On PowerShell:
 Copy-Item .env.example .env
 ```
 
-Required values:
+Simple `.env`:
 
 ```text
 DISCORD_TOKEN=your_bot_token
 CLIENT_ID=your_application_id
 MONGO_URI=your_mongodb_connection_string
 DEV_IDS=your_discord_user_id
-```
-
-Command settings:
-
-```text
 PREFIX=,
-NO_PREFIX_ENABLED=true
-```
-
-Sync style defaults:
-
-```text
 DEFAULT_SYNC_MODE=normal
-CV2_WEBHOOK_USERNAME=
+BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moderation, and recovery.
+THEME_PRIMARY=#B829FF
+THEME_SECONDARY=#35FF95
+THEME_BACKGROUND=#050507
+HELP_BANNER_URL=
 ```
 
-Use `CV2_WEBHOOK_USERNAME` only when you want the CV2 card webhook name to differ from the bot's live Discord username.
+`HELP_BANNER_URL` is optional. If it is empty, the help menu uses the bot avatar as the banner media. The bot still supports advanced optional variables such as `NO_PREFIX_ENABLED`, `WEBHOOK_NAME`, `SYNC_QUEUE_DELAY`, `MESSAGE_SPAM_LIMIT`, `EMOJI_*`, `CV2_WEBHOOK_USERNAME`, and legacy `CANVAS_*` theme values, but you do not need them for a normal setup.
 
 No-prefix access is automatic for `DEV_IDS`. Extra users must be granted by a bot developer with `/noprefix add` or `,noprefix add`.
 

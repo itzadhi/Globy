@@ -1,6 +1,7 @@
 const path = require('path');
 const ms = require('ms');
 const dotenv = require('dotenv');
+const packageInfo = require('../../package.json');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -21,6 +22,14 @@ function number(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+const theme = {
+  primary: process.env.THEME_PRIMARY || process.env.CANVAS_ACCENT_PRIMARY || '#B829FF',
+  secondary: process.env.THEME_SECONDARY || process.env.CANVAS_ACCENT_SECONDARY || '#35FF95',
+  background: process.env.THEME_BACKGROUND || process.env.CANVAS_BACKGROUND || '#050507',
+  text: process.env.THEME_TEXT || process.env.CANVAS_TEXT || '#FFFFFF',
+  muted: process.env.THEME_MUTED || process.env.CANVAS_MUTED || '#A6ABB7'
+};
+
 const config = {
   token: process.env.DISCORD_TOKEN,
   clientId: process.env.CLIENT_ID,
@@ -35,8 +44,15 @@ const config = {
     prefix: process.env.PREFIX || ',',
     noPrefixEnabled: process.env.NO_PREFIX_ENABLED !== 'false'
   },
+  brand: {
+    tagline: process.env.BOT_TAGLINE || packageInfo.description,
+    footer: process.env.BOT_FOOTER || packageInfo.name
+  },
+  help: {
+    bannerUrl: process.env.HELP_BANNER_URL
+  },
   colors: {
-    primary: process.env.EMBED_COLOR || '#00E5FF',
+    primary: process.env.EMBED_COLOR || theme.primary,
     success: process.env.SUCCESS_COLOR || '#35FF95',
     error: process.env.ERROR_COLOR || '#FF4D6D',
     warning: '#FFD166',
@@ -52,11 +68,11 @@ const config = {
     maxRecoveryLimit: number(process.env.MAX_RECOVERY_LIMIT, 100)
   },
   canvas: {
-    background: process.env.CANVAS_BACKGROUND || '#050507',
-    accentPrimary: process.env.CANVAS_ACCENT_PRIMARY || '#FF2ACF',
-    accentSecondary: process.env.CANVAS_ACCENT_SECONDARY || '#35FF95',
-    text: process.env.CANVAS_TEXT || '#FFFFFF',
-    muted: process.env.CANVAS_MUTED || '#A6ABB7'
+    background: theme.background,
+    accentPrimary: theme.primary,
+    accentSecondary: theme.secondary,
+    text: theme.text,
+    muted: theme.muted
   },
   moderation: {
     toxicWords: list(process.env.TOXIC_WORDS).map((word) => word.toLowerCase()),
