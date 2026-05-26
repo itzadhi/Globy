@@ -72,7 +72,6 @@ module.exports = [
         ...panelPayload({
           title: 'Globy Status',
           description: 'Live CV2 runtime.',
-          accentColor: database.ok ? config.colors.success : config.colors.warning,
           fields: [
             { name: 'API Ping', value: `${apiLatency}ms` },
             { name: 'Database', value: database.ok ? `Connected (${database.latency}ms)` : `Offline: ${database.message}` },

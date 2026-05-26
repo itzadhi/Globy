@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Globy CV2 is a next-generation Discord cross-server communication platform powered by webhooks, synchronized profiles, global moderation, recovery systems, and scalable architecture.",
   "main": "src/index.js",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE.md",
   "private": false,
   "engines": {
     "node": ">=18.17.0"
@@ -20,11 +20,9 @@
     "webhooks",
     "cross-server",
     "mongodb",
-    "mongoose",
-    "canvas"
+    "mongoose"
   ],
   "dependencies": {
-    "canvas": "^3.2.3",
     "chalk": "^4.1.2",
     "discord.js": "^14.26.4",
     "dotenv": "^16.4.5",

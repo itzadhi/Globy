@@ -60,7 +60,6 @@ module.exports = {
       await interaction.editReply(panelPayload({
         title: 'No-Prefix Status',
         description: 'Only bot developers can grant access.',
-        accentColor: config.colors.primary,
         ephemeral: true,
         fields: [
           { name: 'System', value: config.commands.noPrefixEnabled ? 'Enabled' : 'Disabled' },

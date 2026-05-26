@@ -10,16 +10,9 @@ const {
   SeparatorSpacingSize,
   TextDisplayBuilder
 } = require('discord.js');
-const { config } = require('../config/env');
 
 const CUSTOM_EMOJI_PATTERN = /<a?:[A-Za-z0-9_]{1,32}:\d{17,22}>/g;
 const UNICODE_EMOJI_PATTERN = /\p{Extended_Pictographic}/gu;
-
-function colorToInt(value) {
-  const clean = String(value || '').replace('#', '');
-  const parsed = Number.parseInt(clean, 16);
-  return Number.isFinite(parsed) ? parsed : 0x00e5ff;
-}
 
 function cleanUiText(value) {
   return String(value || '')
@@ -57,11 +50,8 @@ function mediaGallery(url, description) {
   return new MediaGalleryBuilder().addItems(item);
 }
 
-function container({ accentColor = null, blocks = [] } = {}) {
+function container({ blocks = [] } = {}) {
   const panel = new ContainerBuilder();
-  if (accentColor && process.env.COMPONENT_SIDEBARS === 'true') {
-    panel.setAccentColor(colorToInt(accentColor));
-  }
 
   for (const block of blocks.filter(Boolean)) {
     if (typeof block === 'string') {
@@ -82,7 +72,7 @@ function container({ accentColor = null, blocks = [] } = {}) {
   return panel;
 }
 
-function panelPayload({ title, description, fields = [], accentColor, ephemeral = false, rows = [] }) {
+function panelPayload({ title, description, fields = [], ephemeral = false, rows = [] }) {
   const lines = [];
   if (title) lines.push(`## ${cleanUiText(title)}`);
   if (description) lines.push(cleanUiText(description));
@@ -100,7 +90,7 @@ function panelPayload({ title, description, fields = [], accentColor, ephemeral 
   }
 
   return {
-    components: [container({ accentColor, blocks })],
+    components: [container({ blocks })],
     flags: ephemeral ? MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral : MessageFlags.IsComponentsV2,
     allowedMentions: {
       parse: [],
@@ -115,7 +105,6 @@ function successPanel(title, description, options = {}) {
   return panelPayload({
     title,
     description,
-    accentColor: config.colors.success,
     ...options
   });
 }
@@ -124,7 +113,6 @@ function errorPanel(title, description, options = {}) {
   return panelPayload({
     title,
     description,
-    accentColor: config.colors.error,
     ...options
   });
 }
@@ -133,7 +121,6 @@ function infoPanel(title, description, options = {}) {
   return panelPayload({
     title,
     description,
-    accentColor: config.colors.primary,
     ...options
   });
 }
@@ -142,7 +129,6 @@ function warningPanel(title, description, options = {}) {
   return panelPayload({
     title,
     description,
-    accentColor: config.colors.warning,
     ...options
   });
 }

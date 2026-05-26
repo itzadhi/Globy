@@ -23,11 +23,11 @@ function number(value, fallback) {
 }
 
 const theme = {
-  primary: process.env.THEME_PRIMARY || process.env.CANVAS_ACCENT_PRIMARY || '#B829FF',
-  secondary: process.env.THEME_SECONDARY || process.env.CANVAS_ACCENT_SECONDARY || '#35FF95',
-  background: process.env.THEME_BACKGROUND || process.env.CANVAS_BACKGROUND || '#050507',
-  text: process.env.THEME_TEXT || process.env.CANVAS_TEXT || '#FFFFFF',
-  muted: process.env.THEME_MUTED || process.env.CANVAS_MUTED || '#A6ABB7'
+  primary: process.env.THEME_PRIMARY || '#B829FF',
+  secondary: process.env.THEME_SECONDARY || '#35FF95',
+  background: process.env.THEME_BACKGROUND || '#050507',
+  text: process.env.THEME_TEXT || '#FFFFFF',
+  muted: process.env.THEME_MUTED || '#A6ABB7'
 };
 
 const config = {
@@ -37,7 +37,6 @@ const config = {
   guildId: process.env.GUILD_ID,
   mongoUri: process.env.MONGO_URI,
   devIds: list(process.env.DEV_IDS || process.env.DEV_ID),
-  emojiGuildId: process.env.EMOJI_GUILD_ID,
   nodeEnv: process.env.NODE_ENV || 'development',
   port: number(process.env.PORT, 3000),
   commands: {
@@ -64,13 +63,6 @@ const config = {
     queueDelayMs: duration(process.env.SYNC_QUEUE_DELAY, '650ms'),
     recoveryDelayMs: duration(process.env.RECOVERY_BATCH_DELAY, '1200ms'),
     maxRecoveryLimit: number(process.env.MAX_RECOVERY_LIMIT, 100)
-  },
-  canvas: {
-    background: theme.background,
-    accentPrimary: theme.primary,
-    accentSecondary: theme.secondary,
-    text: theme.text,
-    muted: theme.muted
   },
   moderation: {
     toxicWords: list(process.env.TOXIC_WORDS).map((word) => word.toLowerCase()),

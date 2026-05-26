@@ -20,7 +20,7 @@ module.exports = {
     });
 
     await Promise.allSettled(client.guilds.cache.map((guild) => upsertGuild(guild)));
-    await preloadRuntime(client);
-    logger.success(`${client.user.tag} is online in ${client.guilds.cache.size} servers`);
+    const preload = await preloadRuntime(client);
+    logger.startup(client, preload, config);
   }
 };

@@ -11,5 +11,4 @@
 - `middleware`: permission and cooldown checks shared by commands
 - `utils`: small reusable helpers
 - `cache`: in-memory caches
-- `canvas`: generated profile cards
 - `config`: environment and UI configuration

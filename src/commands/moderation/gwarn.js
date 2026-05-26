@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { createRestriction } = require('../../services/blacklistService');
 const { canUseGlobalModeration } = require('../../middleware/permissions');
-const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
 
 module.exports = {
@@ -36,7 +35,6 @@ module.exports = {
     await interaction.editReply(panelPayload({
       title: 'Global Warning Recorded',
       description: `${target} now has a CV2 warning record.`,
-      accentColor: config.colors.warning,
       ephemeral: true,
       fields: [{ name: 'Reason', value: record.reason }]
     }));

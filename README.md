@@ -1,15 +1,37 @@
 # Globy CV2
 
+<p align="center">
+  <img src="docs/assets/adhi-profile.jpeg" width="140" alt="Adhi profile">
+</p>
+
 Globy CV2 is a production-oriented Discord cross-server communication bot. Server admins choose a channel, and Globy CV2 immediately starts mirroring messages across every connected channel using Discord webhooks.
+
+Created by **Adhi** (`itzadhi`). If this project helps you, please star the repository and follow `itzadhi` to support more scalable Discord bot projects.
 
 The project is built with:
 
 - Node.js
 - discord.js v14.26+
 - MongoDB with Mongoose
-- Canvas
 
 The architecture is intentionally simple: commands call services, services use models, and MongoDB stays the source of truth.
+
+## Credits And License
+
+Globy CV2 is created by **Adhi**.
+
+- GitHub username: `itzadhi`
+- Display name: `Adhi`
+- Full credit page: [docs/CREDITS.md](docs/CREDITS.md)
+- Detailed project guide: [docs/PROJECT_GUIDE.md](docs/PROJECT_GUIDE.md)
+
+You can edit, fork, host, customize, and build on this project freely. The main required clause is that public copies, forks, deployments, showcases, tutorials, and redistributed versions must keep clear credit:
+
+```text
+Globy CV2 by Adhi (GitHub: itzadhi)
+```
+
+See [LICENSE.md](LICENSE.md) for the full credit-required license.
 
 ## What Globy CV2 Does
 
@@ -20,12 +42,11 @@ The architecture is intentionally simple: commands call services, services use m
 - Stores message recovery data in MongoDB
 - Rebuilds broken webhook messages with `/recovermessages`
 - Tracks global XP, levels, and message counts
-- Generates Canvas profile cards
 - Blocks dangerous pings before sync
 - Filters spam, scam patterns, invite links, caps spam, repeat spam, and emoji spam
 - Supports slash commands, comma-prefix commands, and developer-granted no-prefix commands
-- Uses Discord Components V2 panels without colored sidebars for command UI
-- Preloads commands, webhook cache, Canvas, and custom emoji at startup
+- Uses clean Discord Components V2 panels for command UI
+- Preloads commands and webhook cache at startup
 
 ## Folder Map
 
@@ -40,8 +61,7 @@ src/
 ├── middleware/      Permission checks
 ├── utils/           Text, time, Components V2, logging, and file helpers
 ├── cache/           In-memory cooldown/webhook caches
-├── canvas/          Profile card renderers
-└── config/          Environment and emoji config
+└── config/          Environment and UI configuration
 ```
 
 ## Install
@@ -82,7 +102,7 @@ THEME_SECONDARY=#35FF95
 THEME_BACKGROUND=#050507
 ```
 
-The bot still supports advanced optional variables such as `NO_PREFIX_ENABLED`, `WEBHOOK_NAME`, `SYNC_QUEUE_DELAY`, `MESSAGE_SPAM_LIMIT`, `EMOJI_*`, `CV2_WEBHOOK_USERNAME`, and legacy `CANVAS_*` theme values, but you do not need them for a normal setup.
+The bot still supports advanced optional variables such as `NO_PREFIX_ENABLED`, `WEBHOOK_NAME`, `SYNC_QUEUE_DELAY`, `MESSAGE_SPAM_LIMIT`, `CV2_WEBHOOK_USERNAME`, and link settings, but you do not need them for a normal setup.
 
 No-prefix access is automatic for `DEV_IDS`. Extra users must be granted by a bot developer with `/noprefix add` or `,noprefix add`.
 
@@ -331,24 +351,13 @@ Attachments are uploaded when small enough. If upload fails or the file is too l
 
 When uploads succeed, attachments are not repeated as extra link text. If an upload fails, the same message falls back to safe link-only attachment output.
 
-## Custom Emoji and Preloading
-
-Set `EMOJI_GUILD_ID` to the server that stores your Globy emoji. At startup, the bot fetches that server's emoji and tries to match common names like `globe`, `shield`, `spark`, `rank`, `link`, `recover`, `ping`, and `profile`.
-
-You can still force exact emoji by setting values such as:
-
-```text
-EMOJI_GLOBE=<:globe:123456789012345678>
-EMOJI_SHIELD=<:shield:123456789012345678>
-```
+## Startup Preloading
 
 Startup preloading warms:
 
 - Slash command registry
 - Prefix and no-prefix command registry
 - Saved webhook credentials from MongoDB
-- Custom emoji from `EMOJI_GUILD_ID`
-- Canvas renderer for cards
 
 ## Moderation and Safety
 
@@ -403,18 +412,6 @@ Webhooks fail:
 - Check whether another bot/user deleted the webhook.
 - Re-run `/setchannel` if the channel was deleted and recreated.
 - Use `/recovermessages` after repairing.
-
-Leaderboard looks empty:
-
-- Users need to send messages in connected sync channels to gain XP.
-- XP has a cooldown to prevent farming.
-- Blacklisted users do not gain XP.
-
-Canvas install fails:
-
-- Make sure Node.js is modern.
-- Install native build requirements for `canvas` on your OS.
-- Run `npm install` again.
 
 ## Production Notes
 

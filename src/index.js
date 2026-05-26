@@ -42,6 +42,12 @@ async function startHealthServer(client) {
 
 async function main() {
   requireRuntimeConfig();
+  logger.banner('Globy CV2 Boot', [
+    ['Mode', config.nodeEnv],
+    ['Node', process.version],
+    ['Prefix', config.commands.prefix],
+    ['Status', config.brand.status]
+  ]);
 
   const client = new Client({
     intents: [

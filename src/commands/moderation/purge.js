@@ -1,7 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { assertPurgePermissions, purgeMessages } = require('../../services/purgeService');
 const { panelPayload } = require('../../utils/componentsV2');
-const { config } = require('../../config/env');
 
 module.exports = {
   category: 'Dev',
@@ -50,7 +49,6 @@ module.exports = {
     await interaction.editReply(panelPayload({
       title: 'Purge Complete',
       description: `Deleted **${result.deleted}** recent message${result.deleted === 1 ? '' : 's'} from this channel.`,
-      accentColor: config.colors.success,
       ephemeral: true,
       fields: [
         { name: 'Requested', value: `${result.requested}` },

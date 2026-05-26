@@ -1,4 +1,4 @@
-const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const SyncChannel = require('../models/Channel');
 const Network = require('../models/Network');
 const Guild = require('../models/Guild');
@@ -13,14 +13,23 @@ const {
   missingBotPermissions,
   permissionNames
 } = require('../middleware/permissions');
-const { createSetupBanner } = require('../canvas/cardRenderer');
 const { config } = require('../config/env');
+const { successPanel } = require('../utils/componentsV2');
 const {
   displayModeDescription,
   displayModeLabel,
   parseDisplayModeInput
 } = require('../utils/syncDisplayMode');
 const { resolveChannel, safeReply } = require('./helpers');
+
+function setupPanel(channel, displayMode, existing = false) {
+  return successPanel(existing ? 'Channel Updated' : 'Channel Connected', `${channel} is ready for Globy CV2 sync.`, {
+    fields: [
+      { name: 'Style', value: displayModeLabel(displayMode) },
+      { name: 'Mode', value: displayModeDescription(displayMode) }
+    ]
+  });
+}
 
 function assertSetupPermission(message) {
   if (!isOwnerOrAdmin(message.member, message.guild)) {
@@ -84,11 +93,7 @@ module.exports = [
         existing.guildName = message.guild.name;
         await existing.save();
 
-        const banner = await createSetupBanner(message.client, channel, displayModeLabel(displayMode));
-        await safeReply(message, {
-          content: `${channel} is already connected. Style updated to **${displayModeLabel(displayMode)}**.`,
-          files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })]
-        });
+        await safeReply(message, setupPanel(channel, displayMode, true));
         return;
       }
 
@@ -128,11 +133,7 @@ module.exports = [
       await Network.updateOne({ name: network }, { $set: { channelCount: activeCount } });
       await Guild.updateOne({ guildId: message.guildId }, { $addToSet: { networks: network } });
 
-      const banner = await createSetupBanner(message.client, channel, displayModeLabel(displayMode));
-      await safeReply(message, {
-        content: `${channel} is ready with **${displayModeLabel(displayMode)}** style. ${displayModeDescription(displayMode)}`,
-        files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })]
-      });
+      await safeReply(message, setupPanel(channel, displayMode));
     }
   },
   {

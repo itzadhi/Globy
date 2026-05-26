@@ -1,4 +1,4 @@
-const { MessageFlags, SectionBuilder, ThumbnailBuilder } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 const SyncChannel = require('../models/Channel');
 const Network = require('../models/Network');
 const MessageLog = require('../models/MessageLog');
@@ -175,36 +175,20 @@ function cv2Card(log, client, uploadedUrls, profile) {
   const botName = sanitizeMentions(client?.user?.username || 'Globy CV2');
   const sourceGuild = sanitizeMentions(log.sourceGuildName || 'Unknown Server');
   const sourceChannel = sanitizeMentions(log.sourceChannelName || 'chat');
-  const authorContent = [
-    `### ${displayName}`,
-    `\`@${exactUsername}\` | Level ${level}`
-  ].join('\n');
-
-  let authorBlock = text(authorContent);
-  if (log.authorAvatar) {
-    const section = new SectionBuilder().addTextDisplayComponents(text(authorContent));
-    section.setThumbnailAccessory(new ThumbnailBuilder().setURL(log.authorAvatar));
-    authorBlock = { type: 'section', section };
-  }
 
   return container({
     blocks: [
       text([
-        `## ${botName} Global Chat`,
-        `${sourceGuild} | #${sourceChannel}`
+        `### ${botName} Global Chat`,
+        `${sourceGuild} / #${sourceChannel}`
       ].join('\n')),
       { type: 'separator' },
-      authorBlock,
-      { type: 'separator', divider: false },
       text([
-        '**Message**',
-        body
+        `**${displayName}**`,
+        `\`@${exactUsername}\`  |  Level ${level}`
       ].join('\n')),
       { type: 'separator', divider: false },
-      text([
-        '**Author**',
-        `\`${exactUsername}\``
-      ].join('\n'))
+      text(body)
     ]
   });
 }

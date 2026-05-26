@@ -54,7 +54,6 @@ module.exports = {
     await interaction.editReply(panelPayload({
       title: 'Recovery Complete',
       description: 'Message repair finished.',
-      accentColor: summary.failed ? config.colors.warning : config.colors.success,
       ephemeral: true,
       fields: [
         { name: 'Scanned', value: `${summary.scanned}` },

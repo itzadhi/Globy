@@ -2,6 +2,8 @@
 
 This guide walks through a clean production setup.
 
+Created by **Adhi** (`itzadhi`). Keep creator credit when you edit, fork, host, or publish your version. See [CREDITS.md](CREDITS.md) and [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
+
 ## 1. Discord Developer Portal
 
 1. Create an application at the Discord Developer Portal.

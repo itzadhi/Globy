@@ -2,7 +2,6 @@ const { SlashCommandBuilder } = require('discord.js');
 const { createRestriction } = require('../../services/blacklistService');
 const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { discordTimestamp } = require('../../utils/time');
-const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
 
 module.exports = {
@@ -43,7 +42,6 @@ module.exports = {
     await interaction.editReply(panelPayload({
       title: 'Global Ban Added',
       description: `${target} is blocked from CV2 sync.`,
-      accentColor: config.colors.error,
       ephemeral: true,
       fields: [
         { name: 'Reason', value: record.reason },

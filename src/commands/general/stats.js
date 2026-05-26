@@ -3,7 +3,6 @@ const SyncChannel = require('../../models/Channel');
 const Profile = require('../../models/Profile');
 const MessageLog = require('../../models/MessageLog');
 const Blacklist = require('../../models/Blacklist');
-const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
 
 module.exports = {
@@ -25,7 +24,6 @@ module.exports = {
     await interaction.editReply(panelPayload({
       title: 'Globy Stats',
       description: 'Current platform counters.',
-      accentColor: config.colors.primary,
       fields: [
         { name: 'Servers', value: `${client.guilds.cache.size}` },
         { name: 'Connected Channels', value: `${channels}` },

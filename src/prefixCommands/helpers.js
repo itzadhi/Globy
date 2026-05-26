@@ -75,7 +75,6 @@ function replyOptions(payload) {
       ...panelPayload({
         title: embed.title || 'Globy CV2',
         description: embed.description || '',
-        accentColor: typeof embed.color === 'number' ? `#${embed.color.toString(16).padStart(6, '0')}` : config.colors.primary,
         fields: (embed.fields || []).map((field) => ({
           name: field.name,
           value: field.value
