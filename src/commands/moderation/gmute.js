@@ -6,7 +6,7 @@ const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
 
 module.exports = {
-  category: 'Moderation',
+  category: 'Dev',
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName('gmute')

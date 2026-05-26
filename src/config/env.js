@@ -46,7 +46,8 @@ const config = {
   },
   brand: {
     tagline: process.env.BOT_TAGLINE || packageInfo.description,
-    footer: process.env.BOT_FOOTER || packageInfo.name
+    footer: process.env.BOT_FOOTER || packageInfo.name,
+    status: process.env.BOT_STATUS || 'Made by Adhi'
   },
   colors: {
     primary: process.env.EMBED_COLOR || theme.primary,

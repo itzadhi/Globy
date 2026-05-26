@@ -49,6 +49,8 @@ async function removeNoPrefixUser(userId, moderator, reason = 'No reason provide
 }
 
 async function listNoPrefixUsers(limit = 15) {
+  if (NoPrefixUser.db.readyState !== 1) return [];
+
   return NoPrefixUser.find({ active: true })
     .sort({ createdAt: -1 })
     .limit(limit)

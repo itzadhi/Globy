@@ -2,12 +2,13 @@ const { SlashCommandBuilder } = require('discord.js');
 const {
   botInviteUrl,
   createServerInvite,
-  guildDetails,
-  guildLine,
-  listBotGuilds,
   resolveBotGuild
 } = require('../../services/botGuildService');
-const { discordTimestamp } = require('../../utils/time');
+const {
+  buildBotGuildDetailPayload,
+  buildBotGuildHomePayload,
+  wireBotGuildCollector
+} = require('../../services/devPanelService');
 const { actionRow, infoPanel, linkButton, successPanel } = require('../../utils/componentsV2');
 const { config } = require('../../config/env');
 
@@ -16,7 +17,7 @@ function notAvailable(value) {
 }
 
 module.exports = {
-  category: 'Admin',
+  category: 'Dev',
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName('botguild')
@@ -67,14 +68,9 @@ module.exports = {
     const action = interaction.options.getSubcommand();
 
     if (action === 'list') {
-      const limit = interaction.options.getInteger('limit') || 10;
-      const guilds = listBotGuilds(client, limit);
-      await interaction.editReply(infoPanel('Bot Servers', guilds.length
-        ? guilds.map(guildLine).join('\n\n')
-        : 'The bot is not currently cached in any servers.', {
-          ephemeral: true,
-          fields: [{ name: 'Total Cached', value: `${client.guilds.cache.size}` }]
-        }));
+      const limit = interaction.options.getInteger('limit') || 25;
+      const response = await interaction.editReply(buildBotGuildHomePayload(client, interaction.user.id, { ephemeral: true, limit }));
+      wireBotGuildCollector(response, interaction.user.id, client, { ephemeral: true, limit });
       return;
     }
 
@@ -90,33 +86,19 @@ module.exports = {
     const guild = await resolveBotGuild(client, interaction.options.getString('guild_id'));
 
     if (action === 'info') {
-      const details = await guildDetails(guild);
-      await interaction.editReply(infoPanel(details.name, 'Server details visible to the bot.', {
-        ephemeral: true,
-        fields: [
-          { name: 'Server ID', value: details.id },
-          { name: 'Owner', value: details.owner },
-          { name: 'Members', value: `${details.members}` },
-          { name: 'Channels', value: `${details.channels}` },
-          { name: 'Roles', value: `${details.roles}` },
-          { name: 'Created', value: discordTimestamp(details.createdAt, 'D') },
-          { name: 'Bot Joined', value: details.joinedAt ? discordTimestamp(details.joinedAt, 'D') : 'Unknown' },
-          { name: 'Shard', value: `${details.shardId}` }
-        ]
-      }));
+      const response = await interaction.editReply(await buildBotGuildDetailPayload(client, guild, interaction.user.id, { ephemeral: true }));
+      wireBotGuildCollector(response, interaction.user.id, client, { ephemeral: true });
       return;
     }
 
     if (action === 'invite') {
       const invite = await createServerInvite(guild, `Invite requested by ${interaction.user.tag || interaction.user.username}`);
-      await interaction.editReply(infoPanel('Server Invite Created', `Invite for **${guild.name}**.`, {
+      const response = await interaction.editReply(await buildBotGuildDetailPayload(client, guild, interaction.user.id, {
         ephemeral: true,
-        fields: [
-          { name: 'Server ID', value: guild.id },
-          { name: 'Channel', value: invite.vanity ? 'Vanity URL' : notAvailable(invite.channel?.toString()) }
-        ],
-        rows: [actionRow(linkButton('Open Invite', invite.url))]
+        inviteUrl: invite.url,
+        notice: `Invite created from ${invite.vanity ? 'Vanity URL' : notAvailable(invite.channel?.toString())}.`
       }));
+      wireBotGuildCollector(response, interaction.user.id, client, { ephemeral: true });
       return;
     }
 

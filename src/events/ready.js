@@ -1,4 +1,5 @@
 const { ActivityType, Events } = require('discord.js');
+const { config } = require('../config/env');
 const { upsertGuild } = require('../services/guildService');
 const { preloadRuntime } = require('../services/preloadService');
 const logger = require('../utils/logger');
@@ -10,8 +11,9 @@ module.exports = {
     client.user.setPresence({
       activities: [
         {
-          name: 'global chat sync',
-          type: ActivityType.Watching
+          name: config.brand.status,
+          state: config.brand.status,
+          type: ActivityType.Custom
         }
       ],
       status: 'online'

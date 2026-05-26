@@ -4,7 +4,7 @@ const { panelPayload } = require('../../utils/componentsV2');
 const { config } = require('../../config/env');
 
 module.exports = {
-  category: 'Moderation',
+  category: 'Dev',
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName('purge')

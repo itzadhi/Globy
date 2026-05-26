@@ -24,15 +24,12 @@ const CATEGORY_META = {
   Sync: {
     description: 'Connect channels, choose sync style, repair webhooks, and recover messages.'
   },
-  Moderation: {
-    description: 'Developer-only safety tools, global actions, warnings, mutes, bans, and cleanup.'
-  },
-  Admin: {
-    description: 'Developer-only bot controls.'
+  Dev: {
+    description: 'Bot developer tools for servers, no-prefix access, cleanup, and global safety.'
   }
 };
 
-const CATEGORY_ORDER = ['General', 'Sync', 'Moderation', 'Admin'];
+const CATEGORY_ORDER = ['General', 'Sync', 'Dev'];
 const excludedHelpCategories = new Set(['Profile']);
 
 function inviteUrl(clientId) {
@@ -72,13 +69,21 @@ function commandCategories(client, options = {}) {
   const grouped = new Map();
   const seen = new Set();
 
+  const displayCategory = (command) => {
+    const category = command.category || 'General';
+    if (excludedHelpCategories.has(category)) return null;
+    if (command.devOnly || category === 'Admin' || category === 'Moderation' || category === 'Dev') {
+      return viewerIsDeveloper ? 'Dev' : null;
+    }
+    return category;
+  };
+
   for (const command of client.commands?.values?.() || []) {
     const data = command.data?.toJSON?.();
     if (!data?.name) continue;
 
-    const category = command.category || 'General';
-    if (excludedHelpCategories.has(category)) continue;
-    if (command.devOnly && !viewerIsDeveloper) continue;
+    const category = displayCategory(command);
+    if (!category) continue;
     if (!grouped.has(category)) grouped.set(category, []);
 
     const matchingPrefix = prefixMap.get(data.name);
@@ -93,9 +98,8 @@ function commandCategories(client, options = {}) {
 
   for (const command of prefixMap.values()) {
     if (seen.has(command.name)) continue;
-    const category = command.category || 'General';
-    if (excludedHelpCategories.has(category)) continue;
-    if (command.devOnly && !viewerIsDeveloper) continue;
+    const category = displayCategory(command);
+    if (!category) continue;
     if (!grouped.has(category)) grouped.set(category, []);
 
     grouped.get(category).push({

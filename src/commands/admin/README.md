@@ -1,3 +1,3 @@
-# Admin Commands
+# Dev Commands
 
-Admin commands manage bot-level systems. No-prefix management is restricted to configured bot developers.
+Dev commands manage bot-level systems. No-prefix and bot server tools are restricted to configured bot developers.

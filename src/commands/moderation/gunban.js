@@ -5,7 +5,7 @@ const { config } = require('../../config/env');
 const { successPanel } = require('../../utils/componentsV2');
 
 module.exports = {
-  category: 'Moderation',
+  category: 'Dev',
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName('gunban')

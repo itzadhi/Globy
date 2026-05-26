@@ -48,6 +48,7 @@ DEV_IDS=your_discord_user_id
 PREFIX=,
 DEFAULT_SYNC_MODE=plain
 BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moderation, and recovery.
+BOT_STATUS=Made by Adhi
 THEME_PRIMARY=#B829FF
 THEME_SECONDARY=#35FF95
 THEME_BACKGROUND=#050507

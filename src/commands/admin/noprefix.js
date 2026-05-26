@@ -2,15 +2,18 @@ const { SlashCommandBuilder } = require('discord.js');
 const {
   addNoPrefixUser,
   removeNoPrefixUser,
-  listNoPrefixUsers,
   isNoPrefixAllowed
 } = require('../../services/noPrefixService');
+const {
+  buildNoPrefixHomePayload,
+  wireNoPrefixCollector
+} = require('../../services/devPanelService');
 const { isDeveloper } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
 const { panelPayload, successPanel } = require('../../utils/componentsV2');
 
 module.exports = {
-  category: 'Admin',
+  category: 'Dev',
   devOnly: true,
   data: new SlashCommandBuilder()
     .setName('noprefix')
@@ -95,16 +98,7 @@ module.exports = {
       return;
     }
 
-    const records = await listNoPrefixUsers(15);
-    const description = records.length
-      ? records.map((record, index) => `${index + 1}. <@${record.userId}> - ${record.reason}`).join('\n')
-      : 'No database allowlist users yet. Bot developers still work automatically.';
-
-    await interaction.editReply(panelPayload({
-      title: 'No-Prefix Allowlist',
-      description,
-      accentColor: config.colors.primary,
-      ephemeral: true
-    }));
+    const response = await interaction.editReply(await buildNoPrefixHomePayload(interaction.user.id, { ephemeral: true }));
+    wireNoPrefixCollector(response, interaction.user.id, { ephemeral: true });
   }
 };

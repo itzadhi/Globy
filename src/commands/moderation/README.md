@@ -1,3 +1,3 @@
-# Moderation Commands
+# Dev Safety Commands
 
-Moderation commands manage global bans and mutes. Access is limited to bot developers, server owners, or users with Administrator permission.
+Dev safety commands manage global bans, mutes, warnings, and purge. Access is limited to configured bot developers.

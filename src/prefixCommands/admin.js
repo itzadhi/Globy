@@ -2,20 +2,22 @@ const { EmbedBuilder } = require('discord.js');
 const {
   addNoPrefixUser,
   removeNoPrefixUser,
-  listNoPrefixUsers,
   isNoPrefixAllowed
 } = require('../services/noPrefixService');
 const {
   botInviteUrl,
   createServerInvite,
-  guildDetails,
-  guildLine,
-  listBotGuilds,
   resolveBotGuild
 } = require('../services/botGuildService');
+const {
+  buildBotGuildDetailPayload,
+  buildBotGuildHomePayload,
+  buildNoPrefixHomePayload,
+  wireBotGuildCollector,
+  wireNoPrefixCollector
+} = require('../services/devPanelService');
 const { isDeveloper } = require('../middleware/permissions');
 const { config } = require('../config/env');
-const { discordTimestamp } = require('../utils/time');
 const { actionRow, linkButton } = require('../utils/componentsV2');
 const { resolveUser, safeReply, usage } = require('./helpers');
 
@@ -29,7 +31,7 @@ module.exports = [
   {
     name: 'noprefix',
     aliases: ['np'],
-    category: 'Admin',
+    category: 'Dev',
     devOnly: true,
     usage: 'noprefix <status|add|remove|list> [user] [reason]',
     description: 'Manage users who can run commands without the comma prefix.',
@@ -87,17 +89,8 @@ module.exports = [
       }
 
       if (action === 'list') {
-        const records = await listNoPrefixUsers(15);
-        const description = records.length
-          ? records.map((record, index) => `${index + 1}. <@${record.userId}> - ${record.reason}`).join('\n')
-          : 'No database allowlist users yet. Bot developers still work automatically.';
-
-        const embed = new EmbedBuilder()
-          .setColor(config.colors.primary)
-          .setTitle('No-Prefix Allowlist')
-          .setDescription(description);
-
-        await safeReply(message, { embeds: [embed] });
+        const reply = await safeReply(message, await buildNoPrefixHomePayload(message.author.id));
+        wireNoPrefixCollector(reply, message.author.id);
         return;
       }
 
@@ -107,7 +100,7 @@ module.exports = [
   {
     name: 'botguild',
     aliases: ['botguilds', 'guilds', 'servers'],
-    category: 'Admin',
+    category: 'Dev',
     devOnly: true,
     usage: 'botguild <list|info|invite|leave|join> [server_id] [reason]',
     description: 'Manage servers the bot is in. Bot developers only.',
@@ -115,15 +108,9 @@ module.exports = [
       const action = (args.shift() || 'list').toLowerCase();
 
       if (action === 'list') {
-        const limit = Math.min(Math.max(Number(args[0]) || 10, 1), 25);
-        const guilds = listBotGuilds(message.client, limit);
-        const embed = new EmbedBuilder()
-          .setColor(config.colors.primary)
-          .setTitle('Bot Servers')
-          .setDescription(guilds.length ? guilds.map(guildLine).join('\n\n') : 'The bot is not currently cached in any servers.')
-          .addFields({ name: 'Total Cached', value: `${message.client.guilds.cache.size}`, inline: true });
-
-        await safeReply(message, { embeds: [embed] });
+        const limit = Math.min(Math.max(Number(args[0]) || 25, 1), 25);
+        const reply = await safeReply(message, buildBotGuildHomePayload(message.client, message.author.id, { limit }));
+        wireBotGuildCollector(reply, message.author.id, message.client, { limit });
         return;
       }
 
@@ -146,41 +133,18 @@ module.exports = [
       const guild = await resolveBotGuild(message.client, guildId);
 
       if (action === 'info') {
-        const details = await guildDetails(guild);
-        const embed = new EmbedBuilder()
-          .setColor(config.colors.primary)
-          .setTitle(details.name)
-          .setDescription('Server details visible to the bot.')
-          .addFields(
-            { name: 'Server ID', value: details.id, inline: false },
-            { name: 'Owner', value: details.owner, inline: false },
-            { name: 'Members', value: `${details.members}`, inline: true },
-            { name: 'Channels', value: `${details.channels}`, inline: true },
-            { name: 'Roles', value: `${details.roles}`, inline: true },
-            { name: 'Created', value: discordTimestamp(details.createdAt, 'D'), inline: true },
-            { name: 'Bot Joined', value: details.joinedAt ? discordTimestamp(details.joinedAt, 'D') : 'Unknown', inline: true },
-            { name: 'Shard', value: `${details.shardId}`, inline: true }
-          );
-
-        await safeReply(message, { embeds: [embed] });
+        const reply = await safeReply(message, await buildBotGuildDetailPayload(message.client, guild, message.author.id));
+        wireBotGuildCollector(reply, message.author.id, message.client);
         return;
       }
 
       if (action === 'invite') {
         const invite = await createServerInvite(guild, `Invite requested by ${message.author.tag || message.author.username}`);
-        const embed = new EmbedBuilder()
-          .setColor(config.colors.primary)
-          .setTitle('Server Invite Created')
-          .setDescription(`Invite for **${guild.name}**.`)
-          .addFields(
-            { name: 'Server ID', value: guild.id, inline: false },
-            { name: 'Channel', value: invite.vanity ? 'Vanity URL' : invite.channel?.toString() || 'Unknown', inline: true }
-          );
-
-        await safeReply(message, {
-          embeds: [embed],
-          components: [actionRow(linkButton('Open Invite', invite.url))]
-        });
+        const reply = await safeReply(message, await buildBotGuildDetailPayload(message.client, guild, message.author.id, {
+          inviteUrl: invite.url,
+          notice: `Invite created from ${invite.vanity ? 'Vanity URL' : invite.channel?.toString() || 'Unknown'}.`
+        }));
+        wireBotGuildCollector(reply, message.author.id, message.client);
         return;
       }
 

@@ -83,7 +83,7 @@ module.exports = [
   {
     name: 'purge',
     aliases: ['clear', 'prune'],
-    category: 'Moderation',
+    category: 'Dev',
     devOnly: true,
     usage: 'purge <amount> [@user] [reason]',
     description: 'Bulk-delete recent messages from this channel.',
@@ -133,7 +133,7 @@ module.exports = [
   {
     name: 'gban',
     aliases: ['globalban'],
-    category: 'Moderation',
+    category: 'Dev',
     devOnly: true,
     usage: 'gban @user [duration] <reason>',
     description: 'Globally ban a user from Globy CV2 synced chat.',
@@ -144,7 +144,7 @@ module.exports = [
   {
     name: 'gunban',
     aliases: ['globalunban'],
-    category: 'Moderation',
+    category: 'Dev',
     devOnly: true,
     usage: 'gunban @user [reason]',
     description: 'Remove a global ban.',
@@ -155,7 +155,7 @@ module.exports = [
   {
     name: 'gmute',
     aliases: ['globalmute'],
-    category: 'Moderation',
+    category: 'Dev',
     devOnly: true,
     usage: 'gmute @user [duration] <reason>',
     description: 'Globally mute a user from Globy CV2 synced chat.',
@@ -166,7 +166,7 @@ module.exports = [
   {
     name: 'gunmute',
     aliases: ['globalunmute'],
-    category: 'Moderation',
+    category: 'Dev',
     devOnly: true,
     usage: 'gunmute @user [reason]',
     description: 'Remove a global mute.',
@@ -177,7 +177,7 @@ module.exports = [
   {
     name: 'gwarn',
     aliases: ['globalwarn'],
-    category: 'Moderation',
+    category: 'Dev',
     devOnly: true,
     usage: 'gwarn @user <reason>',
     description: 'Record a global warning for a user.',
