@@ -13,7 +13,6 @@ const { buildHelpHomePayload, wireHelpCollector } = require('../services/helpMen
 const { formatDuration } = require('../utils/time');
 const { config } = require('../config/env');
 const { panelPayload } = require('../utils/componentsV2');
-const emojis = require('../config/emojis');
 const {
   commandEmbed,
   resolveUser,
@@ -41,7 +40,7 @@ module.exports = [
     description: 'Show prefix and no-prefix status.',
     async execute(message, args, { prefix }) {
       const embed = commandEmbed(
-        `${emojis.link} Command Prefix`,
+        'Command Prefix',
         [
           `Current prefix: \`${prefix}\``,
           `Bot mention prefix: <@${message.client.user.id}>`,
@@ -60,7 +59,7 @@ module.exports = [
     usage: 'ping',
     description: 'Show latency, database status, websocket ping, and uptime.',
     async execute(message) {
-      const sent = await safeReply(message, { content: `${emojis.ping} Checking Globy status...` });
+      const sent = await safeReply(message, { content: 'Checking Globy status...' });
       const apiLatency = sent.createdTimestamp - message.createdTimestamp;
       const database = await pingDatabase().catch((error) => ({
         ok: false,
@@ -71,8 +70,8 @@ module.exports = [
       await sent.edit({
         content: null,
         ...panelPayload({
-          title: `${emojis.ping} Globy Status`,
-          description: 'Live runtime health for Globy CV2.',
+          title: 'Globy Status',
+          description: 'Live CV2 runtime.',
           accentColor: database.ok ? config.colors.success : config.colors.warning,
           fields: [
             { name: 'API Ping', value: `${apiLatency}ms` },
@@ -100,7 +99,7 @@ module.exports = [
 
       const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setTitle(`${emojis.globe} Globy CV2 Stats`)
+        .setTitle('Globy Stats')
         .addFields(
           { name: 'Servers', value: `${message.client.guilds.cache.size}`, inline: true },
           { name: 'Connected Channels', value: `${channels}`, inline: true },
@@ -163,12 +162,12 @@ module.exports = [
     async execute(message) {
       const embed = new EmbedBuilder()
         .setColor(config.colors.primary)
-        .setTitle(`${emojis.globe} Globy CV2`)
-        .setDescription('A premium cross-server Discord communication platform powered by webhooks, synchronized profiles, global moderation, and recovery systems.')
+        .setTitle('Globy CV2')
+        .setDescription('Cross-server chat, webhook sync, safety, and recovery in one clean system.')
         .addFields(
-          { name: 'Sync Engine', value: 'Cross-server webhook sync with edits, deletes, attachments, replies, and recovery.', inline: false },
-          { name: 'Profiles', value: 'Global XP, levels, message counts, and Canvas profile cards.', inline: false },
-          { name: 'Safety', value: 'Mention protection, spam filters, scam checks, blacklist tools, and moderation logs.', inline: false }
+          { name: 'Sync', value: 'Webhook relay with edits, deletes, replies, and files.', inline: false },
+          { name: 'Safety', value: 'Mention protection, spam checks, and dev moderation.', inline: false },
+          { name: 'Recovery', value: 'MongoDB-backed message repair after outages.', inline: false }
         )
         .setTimestamp();
 

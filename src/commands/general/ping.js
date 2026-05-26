@@ -3,7 +3,6 @@ const { pingDatabase } = require('../../services/databaseService');
 const { formatDuration } = require('../../utils/time');
 const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'General',
@@ -22,8 +21,8 @@ module.exports = {
     const color = database.ok && client.ws.ping < 250 ? config.colors.success : config.colors.warning;
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.ping} Globy Status`,
-      description: 'Live runtime health for Globy CV2.',
+      title: 'Globy Status',
+      description: 'Live CV2 runtime.',
       accentColor: color,
       fields: [
         { name: 'API Ping', value: `${apiLatency}ms` },

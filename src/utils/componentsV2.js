@@ -12,10 +12,33 @@ const {
 } = require('discord.js');
 const { config } = require('../config/env');
 
+const CUSTOM_EMOJI_PATTERN = /<a?:[A-Za-z0-9_]{1,32}:\d{17,22}>/g;
+const UNICODE_EMOJI_PATTERN = /\p{Extended_Pictographic}/gu;
+
 function colorToInt(value) {
   const clean = String(value || '').replace('#', '');
   const parsed = Number.parseInt(clean, 16);
   return Number.isFinite(parsed) ? parsed : 0x00e5ff;
+}
+
+function cleanUiText(value) {
+  return String(value || '')
+    .replace(CUSTOM_EMOJI_PATTERN, '')
+    .replace(UNICODE_EMOJI_PATTERN, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function compactField(field) {
+  const name = cleanUiText(field.name);
+  const value = cleanUiText(Array.isArray(field.value) ? field.value.join('\n') : field.value) || 'None';
+
+  if (value.length <= 90 && !value.includes('\n')) {
+    return `**${name}:** ${value}`;
+  }
+
+  return `**${name}**\n${value}`;
 }
 
 function text(content) {
@@ -32,21 +55,6 @@ function mediaGallery(url, description) {
   const item = new MediaGalleryItemBuilder().setURL(url);
   if (description) item.setDescription(description);
   return new MediaGalleryBuilder().addItems(item);
-}
-
-function componentEmoji(value, fallback = '✨') {
-  const textValue = String(value || fallback).trim();
-  const custom = textValue.match(/^<(a?):([A-Za-z0-9_]{2,32}):(\d{17,22})>$/);
-
-  if (custom) {
-    return {
-      animated: custom[1] === 'a',
-      name: custom[2],
-      id: custom[3]
-    };
-  }
-
-  return { name: textValue || fallback };
 }
 
 function container({ accentColor = null, blocks = [] } = {}) {
@@ -76,23 +84,14 @@ function container({ accentColor = null, blocks = [] } = {}) {
 
 function panelPayload({ title, description, fields = [], accentColor, ephemeral = false, rows = [] }) {
   const lines = [];
-  if (title) lines.push(`# ${title}`);
-  if (description) lines.push(description);
+  if (title) lines.push(`## ${cleanUiText(title)}`);
+  if (description) lines.push(cleanUiText(description));
 
   const blocks = [text(lines.join('\n'))];
 
   if (fields.length) {
     blocks.push({ type: 'separator' });
-    blocks.push(
-      text(
-        fields
-          .map((field) => {
-            const value = Array.isArray(field.value) ? field.value.join('\n') : field.value;
-            return `### ${field.name}\n${value || 'None'}`;
-          })
-          .join('\n')
-      )
-    );
+    blocks.push(text(fields.map(compactField).join('\n')));
   }
 
   for (const row of rows) {
@@ -161,9 +160,9 @@ function actionRow(...components) {
 
 module.exports = {
   text,
+  cleanUiText,
   separator,
   mediaGallery,
-  componentEmoji,
   container,
   panelPayload,
   successPanel,

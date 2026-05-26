@@ -15,7 +15,6 @@ const {
 } = require('../middleware/permissions');
 const { createSetupBanner } = require('../canvas/cardRenderer');
 const { config } = require('../config/env');
-const emojis = require('../config/emojis');
 const {
   displayModeDescription,
   displayModeLabel,
@@ -147,8 +146,8 @@ module.exports = [
 
       const embed = new EmbedBuilder()
         .setColor(config.colors.success)
-        .setTitle(`${emojis.link} Channel Removed`)
-        .setDescription(`${channel} was disconnected from Globy CV2 sync.`)
+        .setTitle('Channel Removed')
+        .setDescription(`${channel} was disconnected from CV2 sync.`)
         .addFields({ name: 'Remaining Connected Channels', value: `${activeCount}`, inline: true });
 
       await safeReply(message, { embeds: [embed] });
@@ -168,8 +167,8 @@ module.exports = [
 
       const embed = new EmbedBuilder()
         .setColor(health.missing?.length ? config.colors.warning : config.colors.success)
-        .setTitle(`${emojis.shield} Sync Health`)
-        .setDescription(`Health report for ${channel}.`)
+        .setTitle('Sync Health')
+        .setDescription(`Report for ${channel}.`)
         .addFields(health.fields.map((field) => ({ ...field, inline: false })));
 
       await safeReply(message, { embeds: [embed] });
@@ -201,8 +200,8 @@ module.exports = [
 
       const embed = new EmbedBuilder()
         .setColor(summary.failed ? config.colors.warning : config.colors.success)
-        .setTitle(`${emojis.recover} Recovery Complete`)
-        .setDescription('Recovery session finished.')
+        .setTitle('Recovery Complete')
+        .setDescription('Message repair finished.')
         .addFields(
           { name: 'Scanned', value: `${summary.scanned}`, inline: true },
           { name: 'Recovered', value: `${summary.recovered}`, inline: true },

@@ -8,7 +8,6 @@ const {
 const { isDeveloper } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
 const { panelPayload, successPanel } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Admin',
@@ -56,8 +55,8 @@ module.exports = {
     if (action === 'status') {
       const allowed = await isNoPrefixAllowed(interaction.user.id);
       await interaction.editReply(panelPayload({
-        title: `${emojis.spark} No-Prefix Status`,
-        description: 'Only bot developers can grant no-prefix access.',
+        title: 'No-Prefix Status',
+        description: 'Only bot developers can grant access.',
         accentColor: config.colors.primary,
         ephemeral: true,
         fields: [
@@ -77,7 +76,7 @@ module.exports = {
       const user = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'Trusted no-prefix user';
       const record = await addNoPrefixUser(user, interaction.user, reason);
-      await interaction.editReply(successPanel(`${emojis.spark} No-Prefix Added`, `${user.tag || user.username} can now run prefix commands without \`${config.commands.prefix}\`.`, {
+      await interaction.editReply(successPanel('No-Prefix Added', `${user.tag || user.username} can now run commands without \`${config.commands.prefix}\`.`, {
         fields: [{ name: 'Reason', value: record.reason }],
         ephemeral: true
       }));
@@ -90,7 +89,7 @@ module.exports = {
       const modified = await removeNoPrefixUser(user.id, interaction.user, reason);
       if (!modified) throw new Error('That user is not currently on the no-prefix allowlist.');
 
-      await interaction.editReply(successPanel(`${emojis.shield} No-Prefix Removed`, `${user.tag || user.username} must use \`${config.commands.prefix}\` again.`, {
+      await interaction.editReply(successPanel('No-Prefix Removed', `${user.tag || user.username} must use \`${config.commands.prefix}\` again.`, {
         ephemeral: true
       }));
       return;
@@ -102,7 +101,7 @@ module.exports = {
       : 'No database allowlist users yet. Bot developers still work automatically.';
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.spark} No-Prefix Allowlist`,
+      title: 'No-Prefix Allowlist',
       description,
       accentColor: config.colors.primary,
       ephemeral: true

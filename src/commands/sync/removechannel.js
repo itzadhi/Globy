@@ -4,7 +4,6 @@ const Network = require('../../models/Network');
 const { isOwnerOrAdmin } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
 const { successPanel } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Sync',
@@ -43,7 +42,7 @@ module.exports = {
     const activeCount = await SyncChannel.countDocuments({ network: existing.network, active: true });
     await Network.updateOne({ name: existing.network }, { $set: { channelCount: activeCount } });
 
-    await interaction.editReply(successPanel(`${emojis.link} Channel Removed`, `${channel} was disconnected from Globy CV2 sync.`, {
+    await interaction.editReply(successPanel('Channel Removed', `${channel} was disconnected from CV2 sync.`, {
       fields: [{ name: 'Remaining Connected Channels', value: `${activeCount}` }],
       ephemeral: true
     }));

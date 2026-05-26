@@ -9,7 +9,7 @@ const {
   StringSelectMenuOptionBuilder,
   ThumbnailBuilder
 } = require('discord.js');
-const { container, text } = require('../utils/componentsV2');
+const { cleanUiText, container, text } = require('../utils/componentsV2');
 const { config } = require('../config/env');
 const { isDeveloper } = require('../middleware/permissions');
 
@@ -144,6 +144,11 @@ function totalCommandCount(categories) {
   return categories.reduce((sum, category) => sum + category.commands.length, 0);
 }
 
+function shortText(value, limit = 120) {
+  const clean = cleanUiText(value);
+  return clean.length > limit ? `${clean.slice(0, limit - 3).trim()}...` : clean;
+}
+
 function botAvatarUrl(client) {
   return client.user.displayAvatarURL({ extension: 'png', size: 256 });
 }
@@ -199,14 +204,11 @@ function categorySelect(categories, selectedId = null) {
 function homeSection(client, categories) {
   const total = totalCommandCount(categories);
   const welcomeText = [
-    `# ${client.user.username} Help!`,
+    `# ${client.user.username} Help`,
     '',
-    `> ${config.brand.tagline}`,
+    `> ${shortText(config.brand.tagline, 105)}`,
     '',
-    '**Quick Stats:**',
-    `> - **${categories.length}** Command Categories`,
-    `> - **${total}** Total Commands`,
-    `> - **${Math.max(0, client.ws.ping)}ms** Live Latency`
+    `**${categories.length}** categories | **${total}** commands | **${Math.max(0, client.ws.ping)}ms** latency`
   ].join('\n');
 
   return new SectionBuilder()
@@ -220,14 +222,14 @@ function homeSection(client, categories) {
 
 function categorySection(client, category) {
   const commandLines = category.commands.map((command) => {
-    const prefix = command.prefix ? `\n> Prefix: \`${command.prefix}\`` : '';
-    return `- **${command.name}**\n> ${command.description}${prefix}`;
+    const prefix = command.prefix ? `  |  \`${command.prefix}\`` : '';
+    return `- **${command.name}**${prefix}\n  ${shortText(command.description, 110)}`;
   });
 
   let detailedText = [
     `# ${category.label} Commands`,
     '',
-    category.description,
+    shortText(category.description, 130),
     '',
     commandLines.join('\n')
   ].join('\n');

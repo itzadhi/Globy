@@ -10,7 +10,6 @@ const webhookService = require('./webhookService');
 const queue = require('./queueService');
 const { logBlockedMessage } = require('./loggingService');
 const { upsertGuild, upsertUser } = require('./guildService');
-const emojis = require('../config/emojis');
 const { config } = require('../config/env');
 const { container, text } = require('../utils/componentsV2');
 const { normalizeDisplayMode } = require('../utils/syncDisplayMode');
@@ -90,7 +89,7 @@ function attachmentLines(log, uploadedUrls = []) {
   if (!attachments.length) return [];
 
   return [
-    `${emojis.link} Attachments:`,
+    'Attachments:',
     ...attachments.slice(0, 10).map((attachment) => {
       const name = sanitizeMentions(safeFileName(attachment.name));
       return attachment.url ? `- [${name}](${attachment.url})` : `- ${name}`;
@@ -125,7 +124,7 @@ function buildContentFromLog(log, uploadedUrls = []) {
   };
 
   if (log.reply?.messageId) {
-    pushBlock(`> ↪ replying to **${sanitizeMentions(log.reply.authorName || 'someone')}**: ${truncate(log.reply.contentPreview || '', 100)}`);
+    pushBlock(`> Replying to **${sanitizeMentions(log.reply.authorName || 'someone')}**: ${truncate(log.reply.contentPreview || '', 100)}`);
   }
 
   if (log.sanitizedContent) {
@@ -133,7 +132,7 @@ function buildContentFromLog(log, uploadedUrls = []) {
   }
 
   if (log.stickers?.length) {
-    pushBlock(log.stickers.map((sticker) => `${emojis.spark} Sticker: ${sanitizeMentions(sticker.name)}`).join('\n'));
+    pushBlock(log.stickers.map((sticker) => `Sticker: ${sanitizeMentions(sticker.name)}`).join('\n'));
   }
 
   const attachments = attachmentLines(log, uploadedUrls);
@@ -174,7 +173,7 @@ function cv2Card(log, client, uploadedUrls, profile) {
   const displayName = sanitizeMentions(log.authorDisplayName || log.authorUsername || 'Unknown User');
   const level = Number.isFinite(profile?.level) ? profile.level : 0;
   const authorContent = [
-    `### ${emojis.profile} ${displayName} x Level ${level}`,
+    `### ${displayName} | Level ${level}`,
     `\`@${exactUsername}\``,
     '',
     body
@@ -189,12 +188,12 @@ function cv2Card(log, client, uploadedUrls, profile) {
 
   return container({
     blocks: [
-      text(`### ${emojis.globe} ${client?.user?.username || 'Globy CV2'} Global Chat`),
+      text(`### ${client?.user?.username || 'Globy CV2'} Global Chat`),
       authorBlock,
       { type: 'separator', divider: false },
       text([
-        `${emojis.spark} Sent by \`${exactUsername}\``,
-        `${emojis.link} ${sanitizeMentions(log.sourceGuildName || 'Unknown Server')} | #${sanitizeMentions(log.sourceChannelName || 'chat')}`
+        `Sent by \`${exactUsername}\``,
+        `${sanitizeMentions(log.sourceGuildName || 'Unknown Server')} | #${sanitizeMentions(log.sourceChannelName || 'chat')}`
       ].join('\n'))
     ]
   });

@@ -4,7 +4,6 @@ const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { discordTimestamp } = require('../../utils/time');
 const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Moderation',
@@ -42,8 +41,8 @@ module.exports = {
     });
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.shield} Global Ban Added`,
-      description: `${target} can no longer sync messages, gain XP, or use Globy CV2 synced chat.`,
+      title: 'Global Ban Added',
+      description: `${target} is blocked from CV2 sync.`,
       accentColor: config.colors.error,
       ephemeral: true,
       fields: [

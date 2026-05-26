@@ -3,7 +3,6 @@ const { liftRestriction } = require('../../services/blacklistService');
 const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
 const { successPanel } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Moderation',
@@ -36,7 +35,7 @@ module.exports = {
 
     if (!modified) throw new Error('That user does not have an active global ban.');
 
-    await interaction.editReply(successPanel(`${emojis.shield} Global Ban Removed`, `${target} can use Globy CV2 synced chat again.`, {
+    await interaction.editReply(successPanel('Global Ban Removed', `${target} can use CV2 sync again.`, {
       ephemeral: true
     }));
   }

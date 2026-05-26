@@ -3,7 +3,6 @@ const { getSyncHealth } = require('../../services/syncHealthService');
 const { isOwnerOrAdmin } = require('../../middleware/permissions');
 const { panelPayload } = require('../../utils/componentsV2');
 const { config } = require('../../config/env');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Sync',
@@ -37,8 +36,8 @@ module.exports = {
     });
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.shield} Sync Health`,
-      description: `Health report for ${channel}.`,
+      title: 'Sync Health',
+      description: `Report for ${channel}.`,
       accentColor: health.missing?.length ? config.colors.warning : config.colors.success,
       ephemeral: true,
       fields: health.fields

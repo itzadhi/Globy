@@ -4,7 +4,6 @@ const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { discordTimestamp } = require('../../utils/time');
 const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Moderation',
@@ -42,8 +41,8 @@ module.exports = {
     });
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.warn} Global Mute Added`,
-      description: `${target} cannot send messages through Globy CV2 synced chat.`,
+      title: 'Global Mute Added',
+      description: `${target} cannot send through CV2 sync.`,
       accentColor: config.colors.warning,
       ephemeral: true,
       fields: [

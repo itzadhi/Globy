@@ -15,7 +15,6 @@ const {
 } = require('../services/botGuildService');
 const { isDeveloper } = require('../middleware/permissions');
 const { config } = require('../config/env');
-const emojis = require('../config/emojis');
 const { discordTimestamp } = require('../utils/time');
 const { actionRow, linkButton } = require('../utils/componentsV2');
 const { resolveUser, safeReply, usage } = require('./helpers');
@@ -41,7 +40,7 @@ module.exports = [
         const allowed = await isNoPrefixAllowed(message.author.id);
         const embed = new EmbedBuilder()
           .setColor(config.colors.primary)
-          .setTitle(`${emojis.spark} No-Prefix Status`)
+          .setTitle('No-Prefix Status')
           .setDescription([
             `System: **${config.commands.noPrefixEnabled ? 'Enabled' : 'Disabled'}**`,
             `You are allowed: **${allowed ? 'Yes' : 'No'}**`,
@@ -62,7 +61,7 @@ module.exports = [
         const record = await addNoPrefixUser(user, message.author, reason);
         const embed = new EmbedBuilder()
           .setColor(config.colors.success)
-          .setTitle(`${emojis.spark} No-Prefix Added`)
+          .setTitle('No-Prefix Added')
           .setDescription(`${user.tag || user.username} can now run prefix commands without \`${prefix}\`.`)
           .addFields({ name: 'Reason', value: record.reason, inline: false });
 
@@ -80,7 +79,7 @@ module.exports = [
 
         const embed = new EmbedBuilder()
           .setColor(config.colors.success)
-          .setTitle(`${emojis.shield} No-Prefix Removed`)
+          .setTitle('No-Prefix Removed')
           .setDescription(`${user.tag || user.username} must use \`${prefix}\` again.`);
 
         await safeReply(message, { embeds: [embed] });
@@ -95,7 +94,7 @@ module.exports = [
 
         const embed = new EmbedBuilder()
           .setColor(config.colors.primary)
-          .setTitle(`${emojis.spark} No-Prefix Allowlist`)
+          .setTitle('No-Prefix Allowlist')
           .setDescription(description);
 
         await safeReply(message, { embeds: [embed] });

@@ -7,7 +7,6 @@ const { assertPurgePermissions, purgeMessages } = require('../services/purgeServ
 const { canUseGlobalModeration } = require('../middleware/permissions');
 const { discordTimestamp } = require('../utils/time');
 const { config } = require('../config/env');
-const emojis = require('../config/emojis');
 const {
   resolveUser,
   parseDurationAndReason,
@@ -39,11 +38,11 @@ async function restrictionCommand(message, args, context, type) {
 
   const embed = new EmbedBuilder()
     .setColor(type === 'ban' ? config.colors.error : config.colors.warning)
-    .setTitle(type === 'ban' ? `${emojis.shield} Global Ban Added` : `${emojis.warn} Global Mute Added`)
+    .setTitle(type === 'ban' ? 'Global Ban Added' : 'Global Mute Added')
     .setDescription(
       type === 'ban'
-        ? `${target} can no longer sync messages, gain XP, or use Globy CV2 synced chat.`
-        : `${target} cannot send messages through Globy CV2 synced chat.`
+        ? `${target} is blocked from CV2 sync.`
+        : `${target} cannot send through CV2 sync.`
     )
     .addFields(
       { name: 'Reason', value: record.reason, inline: false },
@@ -70,11 +69,11 @@ async function liftCommand(message, args, context, type) {
 
   const embed = new EmbedBuilder()
     .setColor(config.colors.success)
-    .setTitle(type === 'ban' ? `${emojis.shield} Global Ban Removed` : `${emojis.shield} Global Mute Removed`)
+    .setTitle(type === 'ban' ? 'Global Ban Removed' : 'Global Mute Removed')
     .setDescription(
       type === 'ban'
-        ? `${target} can use Globy CV2 synced chat again.`
-        : `${target} can send through Globy CV2 synced chat again.`
+        ? `${target} can use CV2 sync again.`
+        : `${target} can send through CV2 sync again.`
     );
 
   await safeReply(message, { embeds: [embed] });
@@ -118,7 +117,7 @@ module.exports = [
 
       const embed = new EmbedBuilder()
         .setColor(config.colors.success)
-        .setTitle(`${emojis.shield} Purge Complete`)
+        .setTitle('Purge Complete')
         .setDescription(`Deleted **${result.deleted}** recent message${result.deleted === 1 ? '' : 's'} from this channel.`)
         .addFields(
           { name: 'Requested', value: `${result.requested}`, inline: true },
@@ -197,8 +196,8 @@ module.exports = [
 
       const embed = new EmbedBuilder()
         .setColor(config.colors.warning)
-        .setTitle(`${emojis.warn} Global Warning Recorded`)
-        .setDescription(`${target} now has a global warning on record.`)
+        .setTitle('Global Warning Recorded')
+        .setDescription(`${target} now has a CV2 warning record.`)
         .addFields({ name: 'Reason', value: record.reason, inline: false });
 
       await safeReply(message, { embeds: [embed] });

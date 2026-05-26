@@ -4,7 +4,6 @@ const { logRecoverySession } = require('../../services/loggingService');
 const { isOwnerOrAdmin } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Sync',
@@ -53,8 +52,8 @@ module.exports = {
     await logRecoverySession(interaction, network, summary);
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.recover} Recovery Complete`,
-      description: 'Recovery session finished.',
+      title: 'Recovery Complete',
+      description: 'Message repair finished.',
       accentColor: summary.failed ? config.colors.warning : config.colors.success,
       ephemeral: true,
       fields: [

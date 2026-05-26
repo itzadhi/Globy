@@ -5,7 +5,6 @@ const MessageLog = require('../../models/MessageLog');
 const Blacklist = require('../../models/Blacklist');
 const { config } = require('../../config/env');
 const { panelPayload } = require('../../utils/componentsV2');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'General',
@@ -24,8 +23,8 @@ module.exports = {
     ]);
 
     await interaction.editReply(panelPayload({
-      title: `${emojis.globe} Globy CV2 Stats`,
-      description: 'Current global platform counters.',
+      title: 'Globy Stats',
+      description: 'Current platform counters.',
       accentColor: config.colors.primary,
       fields: [
         { name: 'Servers', value: `${client.guilds.cache.size}` },
