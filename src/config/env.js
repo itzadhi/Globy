@@ -22,14 +22,6 @@ function number(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-const theme = {
-  primary: process.env.THEME_PRIMARY || '#B829FF',
-  secondary: process.env.THEME_SECONDARY || '#35FF95',
-  background: process.env.THEME_BACKGROUND || '#050507',
-  text: process.env.THEME_TEXT || '#FFFFFF',
-  muted: process.env.THEME_MUTED || '#A6ABB7'
-};
-
 const config = {
   token: process.env.DISCORD_TOKEN,
   clientId: process.env.CLIENT_ID,
@@ -49,9 +41,9 @@ const config = {
     status: process.env.BOT_STATUS || 'Made by Adhi'
   },
   colors: {
-    primary: process.env.EMBED_COLOR || theme.primary,
-    success: process.env.SUCCESS_COLOR || '#35FF95',
-    error: process.env.ERROR_COLOR || '#FF4D6D',
+    primary: '#B829FF',
+    success: '#35FF95',
+    error: '#FF4D6D',
     warning: '#FFD166',
     dark: '#07111F'
   },

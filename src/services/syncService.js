@@ -1,4 +1,4 @@
-const { MessageFlags } = require('discord.js');
+const { MessageFlags, SectionBuilder, ThumbnailBuilder } = require('discord.js');
 const SyncChannel = require('../models/Channel');
 const Network = require('../models/Network');
 const MessageLog = require('../models/MessageLog');
@@ -127,8 +127,9 @@ function buildContentFromLog(log, uploadedUrls = []) {
     pushBlock(`> Replying to **${sanitizeMentions(log.reply.authorName || 'someone')}**: ${truncate(log.reply.contentPreview || '', 100)}`);
   }
 
-  if (log.sanitizedContent) {
-    pushBlock(log.sanitizedContent);
+  const mainContent = log.sanitizedContent || (log.content ? sanitizeMentions(log.content) : '');
+  if (mainContent) {
+    pushBlock(mainContent);
   }
 
   if (log.stickers?.length) {
@@ -140,7 +141,7 @@ function buildContentFromLog(log, uploadedUrls = []) {
     pushBlock(attachments.join('\n'));
   }
 
-  if (!log.sanitizedContent && !log.attachments?.length && !log.stickers?.length) {
+  if (!mainContent && !log.attachments?.length && !log.stickers?.length) {
     pushBlock('*No text content*');
   }
 
@@ -175,6 +176,18 @@ function cv2Card(log, client, uploadedUrls, profile) {
   const botName = sanitizeMentions(client?.user?.username || 'Globy CV2');
   const sourceGuild = sanitizeMentions(log.sourceGuildName || 'Unknown Server');
   const sourceChannel = sanitizeMentions(log.sourceChannelName || 'chat');
+  const authorLines = [
+    `**${displayName}**`,
+    `\`@${exactUsername}\`  |  Level ${level}`
+  ].join('\n');
+  const authorBlock = log.authorAvatar
+    ? {
+      type: 'section',
+      section: new SectionBuilder()
+        .addTextDisplayComponents(text(authorLines))
+        .setThumbnailAccessory(new ThumbnailBuilder().setURL(log.authorAvatar))
+    }
+    : text(authorLines);
 
   return container({
     blocks: [
@@ -183,10 +196,7 @@ function cv2Card(log, client, uploadedUrls, profile) {
         `${sourceGuild} / #${sourceChannel}`
       ].join('\n')),
       { type: 'separator' },
-      text([
-        `**${displayName}**`,
-        `\`@${exactUsername}\`  |  Level ${level}`
-      ].join('\n')),
+      authorBlock,
       { type: 'separator', divider: false },
       text(body)
     ]

@@ -97,9 +97,6 @@ PREFIX=,
 DEFAULT_SYNC_MODE=plain
 BOT_TAGLINE=A premium cross-server Discord bot for webhook chat, profiles, moderation, and recovery.
 BOT_STATUS=Made by Adhi
-THEME_PRIMARY=#B829FF
-THEME_SECONDARY=#35FF95
-THEME_BACKGROUND=#050507
 ```
 
 The bot still supports advanced optional variables such as `NO_PREFIX_ENABLED`, `WEBHOOK_NAME`, `SYNC_QUEUE_DELAY`, `MESSAGE_SPAM_LIMIT`, `CV2_WEBHOOK_USERNAME`, and link settings, but you do not need them for a normal setup.
