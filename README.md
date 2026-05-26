@@ -312,7 +312,6 @@ A no-prefix user can run:
 ```text
 ping
 help sync
-profile
 ```
 
 No-prefix command messages are handled before sync, so they will not be mirrored to other servers.
