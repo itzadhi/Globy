@@ -9,7 +9,7 @@ module.exports = {
 
   async execute(interaction) {
     const response = await interaction.reply({
-      ...buildHelpHomePayload(interaction.client, { ephemeral: true }),
+      ...buildHelpHomePayload(interaction.client, { ephemeral: true, viewerId: interaction.user.id }),
       fetchReply: true
     });
 

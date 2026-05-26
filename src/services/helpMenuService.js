@@ -9,37 +9,31 @@ const {
   StringSelectMenuOptionBuilder,
   ThumbnailBuilder
 } = require('discord.js');
-const { componentEmoji, container, text } = require('../utils/componentsV2');
+const { container, text } = require('../utils/componentsV2');
 const { config } = require('../config/env');
-const emojis = require('../config/emojis');
+const { isDeveloper } = require('../middleware/permissions');
 
 // Components V2 help menu inspired by Discord.py LayoutView containers.
 // Command lists are discovered from the loaded slash/prefix commands so the menu
 // stays current when commands are added, removed, or moved between categories.
 const CATEGORY_META = {
   General: {
-    icon: () => emojis.spark,
     description: 'Information, status, invite, and utility commands.'
   },
   Sync: {
-    icon: () => emojis.link,
     description: 'Connect channels, choose sync style, repair webhooks, and recover messages.'
   },
-  Profile: {
-    icon: () => emojis.profile,
-    description: 'Global XP, levels, message counts, and profile cards.'
-  },
   Moderation: {
-    icon: () => emojis.shield,
-    description: 'Safety tools, global actions, warnings, mutes, bans, and cleanup.'
+    description: 'Developer-only safety tools, global actions, warnings, mutes, bans, and cleanup.'
   },
   Admin: {
-    icon: () => emojis.warn,
-    description: 'Developer and administrator controls.'
+    description: 'Developer-only bot controls.'
   }
 };
 
-const CATEGORY_ORDER = ['General', 'Sync', 'Profile', 'Moderation', 'Admin'];
+const CATEGORY_ORDER = ['General', 'Sync', 'Moderation', 'Admin'];
+const hiddenHelpCategories = new Set(['Profile']);
+const developerOnlyCategories = new Set(['Moderation', 'Admin']);
 
 function inviteUrl(clientId) {
   const permissions = [
@@ -72,7 +66,8 @@ function formatPrefixUsage(command) {
   return `${config.commands.prefix}${command.usage || command.name}`;
 }
 
-function commandCategories(client) {
+function commandCategories(client, options = {}) {
+  const viewerIsDeveloper = isDeveloper(options.viewerId);
   const prefixMap = prefixCommandMap(client);
   const grouped = new Map();
   const seen = new Set();
@@ -82,6 +77,8 @@ function commandCategories(client) {
     if (!data?.name) continue;
 
     const category = command.category || 'General';
+    if (hiddenHelpCategories.has(category)) continue;
+    if (developerOnlyCategories.has(category) && !viewerIsDeveloper) continue;
     if (!grouped.has(category)) grouped.set(category, []);
 
     const matchingPrefix = prefixMap.get(data.name);
@@ -97,6 +94,8 @@ function commandCategories(client) {
   for (const command of prefixMap.values()) {
     if (seen.has(command.name)) continue;
     const category = command.category || 'General';
+    if (hiddenHelpCategories.has(category)) continue;
+    if (developerOnlyCategories.has(category) && !viewerIsDeveloper) continue;
     if (!grouped.has(category)) grouped.set(category, []);
 
     grouped.get(category).push({
@@ -114,7 +113,6 @@ function commandCategories(client) {
         id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         name,
         label: name,
-        icon: meta.icon?.() || emojis.spark,
         description: meta.description || `${name} commands for Globy CV2.`,
         commands: commands.sort((a, b) => a.id.localeCompare(b.id))
       };
@@ -134,7 +132,6 @@ function commandCategories(client) {
     id: 'general',
     name: 'General',
     label: 'General',
-    icon: emojis.spark,
     description: CATEGORY_META.General.description,
     commands: []
   }];
@@ -194,7 +191,6 @@ function categorySelect(categories, selectedId = null) {
             .setLabel(category.label)
             .setValue(category.id)
             .setDescription(`View ${category.commands.length} commands`)
-            .setEmoji(componentEmoji(category.icon))
             .setDefault(category.id === selectedId)
         )
       )
@@ -276,7 +272,7 @@ function payloadFlags(ephemeral) {
 }
 
 function buildHelpHomePayload(client, options = {}) {
-  const categories = commandCategories(client);
+  const categories = commandCategories(client, options);
   const blocks = [
     { type: 'section', section: homeSection(client, categories) },
     { type: 'separator' },
@@ -295,7 +291,7 @@ function buildHelpHomePayload(client, options = {}) {
 }
 
 function buildHelpCategoryPayload(client, categoryId, options = {}) {
-  const categories = commandCategories(client);
+  const categories = commandCategories(client, options);
   const category = categoryById(categories, categoryId);
   const blocks = [
     { type: 'section', section: categorySection(client, category) },
@@ -315,6 +311,7 @@ function buildHelpCategoryPayload(client, categoryId, options = {}) {
 }
 
 function wireHelpCollector(message, authorId, client, options = {}) {
+  const viewerOptions = { ...options, viewerId: authorId };
   const collector = message.createMessageComponentCollector({ time: options.time || 120000 });
 
   collector.on('collect', async (component) => {
@@ -327,13 +324,13 @@ function wireHelpCollector(message, authorId, client, options = {}) {
     }
 
     if (component.customId === 'help_back_home') {
-      await component.update(buildHelpHomePayload(client));
+      await component.update(buildHelpHomePayload(client, viewerOptions));
       return;
     }
 
     if (component.customId === 'help_category_select') {
       const categoryId = component.values?.[0];
-      await component.update(buildHelpCategoryPayload(client, categoryId));
+      await component.update(buildHelpCategoryPayload(client, categoryId, viewerOptions));
     }
   });
 

@@ -20,7 +20,7 @@ function isDeveloper(userId) {
 }
 
 function canUseGlobalModeration(member, guild) {
-  return isDeveloper(member?.id) || isOwnerOrAdmin(member, guild);
+  return isDeveloper(member?.id || member?.user?.id);
 }
 
 function isSupportedTextChannel(channel) {

@@ -29,7 +29,7 @@ module.exports = [
     usage: 'help',
     description: 'Open the interactive Globy CV2 help menu.',
     async execute(message) {
-      const reply = await safeReply(message, buildHelpHomePayload(message.client));
+      const reply = await safeReply(message, buildHelpHomePayload(message.client, { viewerId: message.author.id }));
       wireHelpCollector(reply, message.author.id, message.client);
     }
   },

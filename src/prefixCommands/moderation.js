@@ -17,7 +17,7 @@ const {
 
 function assertModerator(message) {
   if (!canUseGlobalModeration(message.member, message.guild)) {
-    throw new Error('You need Administrator permission, server ownership, or developer access to use global moderation.');
+    throw new Error('Only configured bot developers can use global moderation.');
   }
 }
 

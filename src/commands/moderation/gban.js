@@ -25,7 +25,7 @@ module.exports = {
     await interaction.deferReply({ ephemeral: true });
 
     if (!canUseGlobalModeration(interaction.member, interaction.guild)) {
-      throw new Error('You need Administrator permission, server ownership, or developer access to use global moderation.');
+      throw new Error('Only configured bot developers can use global moderation.');
     }
 
     const target = interaction.options.getUser('user');

@@ -269,11 +269,7 @@ Sync:
 - `/synchealth`, `,synchealth`
 - `/recovermessages`, `,recovermessages`
 
-Profile:
-
-- `/profile`, `,profile`
-
-Moderation:
+Moderation (bot developers only):
 
 - `/gban`, `,gban`
 - `/gunban`, `,gunban`
@@ -282,7 +278,7 @@ Moderation:
 - `/gwarn`, `,gwarn`
 - `/purge`, `,purge`
 
-Admin:
+Admin (bot developers only):
 
 - `/noprefix`
 - `,noprefix`
