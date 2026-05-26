@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const { getLeaderboard } = require('../../services/profileService');
 const { createLeaderboardCard } = require('../../canvas/cardRenderer');
-const { infoEmbed } = require('../../utils/embeds');
+const { infoPanel } = require('../../utils/componentsV2');
 
 module.exports = {
   category: 'Profile',
@@ -24,7 +24,7 @@ module.exports = {
 
     if (!entries.length) {
       await interaction.editReply({
-        embeds: [infoEmbed('Leaderboard Empty', 'No profiles have earned XP yet.', client)]
+        ...infoPanel('Leaderboard Empty', 'No profiles have earned XP yet.')
       });
       return;
     }

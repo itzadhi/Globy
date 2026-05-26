@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { giveReputation } = require('../../services/profileService');
 const { isBlocked } = require('../../services/blacklistService');
 const { config } = require('../../config/env');
+const { successPanel } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -25,11 +26,6 @@ module.exports = {
     }
 
     const profile = await giveReputation(interaction.user, receiver);
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.success)
-      .setTitle(`${emojis.rank} Reputation Sent`)
-      .setDescription(`${receiver} now has **${profile.reputation}** reputation.`);
-
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(successPanel(`${emojis.rank} Reputation Sent`, `${receiver} now has **${profile.reputation}** reputation.`));
   }
 };

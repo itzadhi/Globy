@@ -1,6 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder, PermissionFlagsBits } = require('discord.js');
 const ms = require('ms');
 const { config } = require('../config/env');
+const { panelPayload } = require('../utils/componentsV2');
 
 function usage(prefix, commandUsage) {
   return `Usage: \`${prefix}${commandUsage}\``;
@@ -68,6 +69,23 @@ function attachment(buffer, name) {
 }
 
 function replyOptions(payload) {
+  if (payload.embeds?.length === 1) {
+    const embed = payload.embeds[0].toJSON ? payload.embeds[0].toJSON() : payload.embeds[0];
+    return {
+      ...panelPayload({
+        title: embed.title || 'Globy CV2',
+        description: embed.description || '',
+        accentColor: typeof embed.color === 'number' ? `#${embed.color.toString(16).padStart(6, '0')}` : config.colors.primary,
+        fields: (embed.fields || []).map((field) => ({
+          name: field.name,
+          value: field.value
+        })),
+        rows: payload.components || []
+      }),
+      files: payload.files
+    };
+  }
+
   return {
     ...payload,
     allowedMentions: {

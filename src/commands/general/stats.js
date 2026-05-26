@@ -1,10 +1,10 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const SyncChannel = require('../../models/Channel');
-const Network = require('../../models/Network');
 const Profile = require('../../models/Profile');
 const MessageLog = require('../../models/MessageLog');
 const Blacklist = require('../../models/Blacklist');
 const { config } = require('../../config/env');
+const { panelPayload } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -16,27 +16,24 @@ module.exports = {
   async execute(interaction, client) {
     await interaction.deferReply();
 
-    const [networks, channels, profiles, messages, restrictions] = await Promise.all([
-      Network.countDocuments({ active: true }),
+    const [channels, profiles, messages, restrictions] = await Promise.all([
       SyncChannel.countDocuments({ active: true }),
       Profile.countDocuments(),
       MessageLog.countDocuments(),
       Blacklist.countDocuments({ active: true })
     ]);
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.primary)
-      .setTitle(`${emojis.globe} Globy CV2 Stats`)
-      .addFields(
-        { name: 'Servers', value: `${client.guilds.cache.size}`, inline: true },
-        { name: 'Networks', value: `${networks}`, inline: true },
-        { name: 'Connected Channels', value: `${channels}`, inline: true },
-        { name: 'Profiles', value: `${profiles}`, inline: true },
-        { name: 'Logged Messages', value: `${messages}`, inline: true },
-        { name: 'Active Restrictions', value: `${restrictions}`, inline: true }
-      )
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(panelPayload({
+      title: `${emojis.globe} Globy CV2 Stats`,
+      description: 'Current global platform counters.',
+      accentColor: config.colors.primary,
+      fields: [
+        { name: 'Servers', value: `${client.guilds.cache.size}` },
+        { name: 'Connected Channels', value: `${channels}` },
+        { name: 'Profiles', value: `${profiles}` },
+        { name: 'Logged Messages', value: `${messages}` },
+        { name: 'Active Restrictions', value: `${restrictions}` }
+      ]
+    }));
   }
 };

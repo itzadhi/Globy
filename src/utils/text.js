@@ -1,4 +1,5 @@
-const NETWORK_PATTERN = /^[a-z0-9_-]{2,32}$/;
+const NETWORK_PATTERN = /^(?=.*[a-z])[a-z0-9_-]{2,32}$/;
+const SNOWFLAKE_PATTERN = /^\d{17,22}$/;
 
 function truncate(value, max = 1900) {
   const text = String(value || '');
@@ -14,7 +15,7 @@ function normalizeNetworkName(value) {
 }
 
 function isValidNetworkName(value) {
-  return NETWORK_PATTERN.test(value);
+  return NETWORK_PATTERN.test(value) && !SNOWFLAKE_PATTERN.test(value);
 }
 
 function sanitizeMentions(content) {
@@ -41,7 +42,7 @@ function findDangerousMentions(message) {
 
 function buildWebhookUsername(member, user, globeEmoji) {
   const baseName = member?.displayName || user?.globalName || user?.username || 'Unknown User';
-  return truncate(`${baseName} ${globeEmoji}`, 80);
+  return truncate(`${baseName}${globeEmoji ? ` ${globeEmoji}` : ''}`, 80);
 }
 
 function stripMarkdown(value) {

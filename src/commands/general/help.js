@@ -1,13 +1,14 @@
 const {
   SlashCommandBuilder,
-  EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ComponentType
+  ComponentType,
+  MessageFlags
 } = require('discord.js');
 const { config } = require('../../config/env');
+const { container, text } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 const categories = {
@@ -21,15 +22,15 @@ const categories = {
     { name: '/about', value: 'Learn what the platform does.' }
   ],
   Sync: [
-    { name: '/setchannel', value: 'Connect a text channel to a named network.' },
+    { name: '/setchannel', value: 'Make a text channel ready for global sync.' },
     { name: '/removechannel', value: 'Disconnect a channel from sync.' },
-    { name: '/networkinfo', value: 'Show network details and connected channels.' },
+    { name: '/synchealth', value: 'Check and repair channel/webhook sync health.' },
     { name: '/recovermessages', value: 'Restore webhook messages from MongoDB logs.' }
   ],
   Moderation: [
     { name: '/gban', value: 'Globally block a user from sync and XP.' },
     { name: '/gunban', value: 'Remove a global ban.' },
-    { name: '/gmute', value: 'Globally mute a user from networks.' },
+    { name: '/gmute', value: 'Globally mute a user from synced chat.' },
     { name: '/gunmute', value: 'Remove a global mute.' },
     { name: '/gwarn', value: 'Record a global warning for a user.' }
   ],
@@ -53,16 +54,6 @@ function render(categoryName, page, client) {
   const maxPage = Math.max(0, Math.ceil(entries.length / pageSize) - 1);
   const safePage = Math.min(Math.max(page, 0), maxPage);
   const slice = entries.slice(safePage * pageSize, safePage * pageSize + pageSize);
-
-  const embed = new EmbedBuilder()
-    .setColor(config.colors.primary)
-    .setTitle(`${emojis.spark} Globy CV2 Help`)
-    .setDescription(`Category: **${categoryName}**`)
-    .addFields(slice.map((entry) => ({ name: entry.name, value: entry.value, inline: false })))
-    .setFooter({
-      text: `Page ${safePage + 1}/${maxPage + 1} • Globy CV2`,
-      iconURL: client.user.displayAvatarURL({ size: 64 })
-    });
 
   const menu = new StringSelectMenuBuilder()
     .setCustomId('help_category')
@@ -88,9 +79,23 @@ function render(categoryName, page, client) {
       .setDisabled(safePage === maxPage)
   );
 
+  const commandLines = slice.map((entry) => `### ${entry.name}\n${entry.value}`).join('\n');
+  const menuRow = new ActionRowBuilder().addComponents(menu);
+  const panel = container({
+    accentColor: config.colors.primary,
+    blocks: [
+      text(`# ${emojis.spark} Globy CV2 Help\nCategory: **${categoryName}**\nPage ${safePage + 1}/${maxPage + 1}`),
+      { type: 'separator' },
+      text(commandLines),
+      { type: 'separator', divider: false },
+      { type: 'row', row: menuRow },
+      { type: 'row', row: navigation }
+    ]
+  });
+
   return {
-    embeds: [embed],
-    components: [new ActionRowBuilder().addComponents(menu), navigation],
+    components: [panel],
+    flags: MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral,
     state: { categoryName, page: safePage }
   };
 }
@@ -107,9 +112,8 @@ module.exports = {
     state = initial.state;
 
     const response = await interaction.reply({
-      embeds: initial.embeds,
       components: initial.components,
-      ephemeral: true,
+      flags: initial.flags,
       fetchReply: true
     });
 
@@ -133,7 +137,7 @@ module.exports = {
       state.page = 0;
       const view = render(state.categoryName, state.page, client);
       state = view.state;
-      await component.update({ embeds: view.embeds, components: view.components });
+      await component.update({ components: view.components, flags: MessageFlags.IsComponentsV2 });
     });
 
     buttonCollector.on('collect', async (component) => {
@@ -145,7 +149,7 @@ module.exports = {
       state.page += component.customId === 'help_next' ? 1 : -1;
       const view = render(state.categoryName, state.page, client);
       state = view.state;
-      await component.update({ embeds: view.embeds, components: view.components });
+      await component.update({ components: view.components, flags: MessageFlags.IsComponentsV2 });
     });
   }
 };

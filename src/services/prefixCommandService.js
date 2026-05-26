@@ -1,7 +1,7 @@
 const { cooldownCache } = require('../cache/runtimeCache');
 const { config } = require('../config/env');
 const { isNoPrefixAllowed } = require('./noPrefixService');
-const { errorEmbed } = require('../utils/embeds');
+const { errorPanel } = require('../utils/componentsV2');
 const logger = require('../utils/logger');
 
 function tokenize(input) {
@@ -102,7 +102,7 @@ async function handlePrefixCommand(message, client) {
   } catch (error) {
     logger.error(`Prefix command ${command.name} failed:`, error);
     await message.reply({
-      embeds: [errorEmbed(error.message || 'Something went wrong while running that command.', client)],
+      ...errorPanel('Action Blocked', error.message || 'Something went wrong while running that command.'),
       allowedMentions: { repliedUser: false }
     }).catch(() => null);
   }

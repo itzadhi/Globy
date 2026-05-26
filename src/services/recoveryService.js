@@ -34,7 +34,7 @@ async function recoverNetwork(client, options) {
   };
 
   for (const logRecord of logs) {
-    const payload = buildPayloadFromLog(logRecord.toObject());
+    const payload = await buildPayloadFromLog(logRecord.toObject());
     for (const target of targets) {
       if (target.channelId === logRecord.sourceChannelId) {
         summary.skipped += 1;

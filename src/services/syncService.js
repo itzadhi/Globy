@@ -31,14 +31,57 @@ function stickerRecords(message) {
   }));
 }
 
-function filePayloads(messageOrLog) {
-  return (messageOrLog.attachments || [])
-    .filter((attachment) => attachment.url)
-    .slice(0, 10)
-    .map((attachment) => ({
-      attachment: attachment.url,
-      name: attachment.name || 'attachment'
-    }));
+function safeFileName(name) {
+  return String(name || 'attachment')
+    .replace(/[^\w.\-()[\] ]/g, '_')
+    .slice(0, 80);
+}
+
+async function downloadAttachmentFile(attachment) {
+  if (!attachment?.url) return null;
+  if (attachment.size && attachment.size > 8 * 1024 * 1024) return null;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(attachment.url, { signal: controller.signal });
+    if (!response.ok) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (!buffer.length || buffer.length > 8 * 1024 * 1024) return null;
+
+    return {
+      attachment: buffer,
+      name: safeFileName(attachment.name)
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function filePayloads(messageOrLog) {
+  const files = [];
+  for (const attachment of (messageOrLog.attachments || []).slice(0, 5)) {
+    const file = await downloadAttachmentFile(attachment);
+    if (file) files.push(file);
+  }
+
+  return files;
+}
+
+function attachmentLines(log) {
+  const attachments = log.attachments || [];
+  if (!attachments.length) return [];
+
+  return [
+    `${emojis.link} Attachments:`,
+    ...attachments.slice(0, 10).map((attachment) => {
+      const name = sanitizeMentions(safeFileName(attachment.name));
+      return attachment.url ? `- [${name}](${attachment.url})` : `- ${name}`;
+    })
+  ];
 }
 
 async function getReplyData(message) {
@@ -61,37 +104,46 @@ async function getReplyData(message) {
 }
 
 function buildContentFromLog(log) {
-  const lines = [`> ${emojis.globe} from **${sanitizeMentions(log.sourceGuildName || 'Unknown Server')}**`];
+  const lines = [];
+  const pushBlock = (value) => {
+    if (lines.length) lines.push('');
+    lines.push(value);
+  };
 
   if (log.reply?.messageId) {
-    lines.push(`> ↪ replying to **${sanitizeMentions(log.reply.authorName || 'someone')}**: ${truncate(log.reply.contentPreview || '', 100)}`);
+    pushBlock(`> ↪ replying to **${sanitizeMentions(log.reply.authorName || 'someone')}**: ${truncate(log.reply.contentPreview || '', 100)}`);
   }
 
   if (log.sanitizedContent) {
-    lines.push('', log.sanitizedContent);
+    pushBlock(log.sanitizedContent);
   }
 
   if (log.stickers?.length) {
-    lines.push('', log.stickers.map((sticker) => `${emojis.spark} Sticker: ${sanitizeMentions(sticker.name)}`).join('\n'));
+    pushBlock(log.stickers.map((sticker) => `${emojis.spark} Sticker: ${sanitizeMentions(sticker.name)}`).join('\n'));
+  }
+
+  const attachments = attachmentLines(log);
+  if (attachments.length) {
+    pushBlock(attachments.join('\n'));
   }
 
   if (!log.sanitizedContent && !log.attachments?.length && !log.stickers?.length) {
-    lines.push('', '*No text content*');
+    pushBlock('*No text content*');
   }
 
   return truncate(lines.join('\n'), 1950);
 }
 
-function buildPayloadFromLog(log) {
+async function buildPayloadFromLog(log) {
   return {
     username: buildWebhookUsername(
       { displayName: log.authorDisplayName || log.authorUsername },
       { username: log.authorUsername },
-      emojis.globe
+      ''
     ),
     avatarURL: log.authorAvatar,
     content: buildContentFromLog(log),
-    files: filePayloads(log)
+    files: await filePayloads(log)
   };
 }
 
@@ -134,32 +186,51 @@ async function relayToTarget(client, targetChannelConfig, logRecord, payload, st
     return null;
   }
 
-  const sent = await webhookService.sendMessage(targetChannelConfig, discordChannel, payload);
-  await MessageLog.updateOne(
-    { _id: logRecord._id },
-    {
-      $push: {
-        webhookMessages: {
-          guildId: targetChannelConfig.guildId,
-          channelId: targetChannelConfig.channelId,
-          webhookId: sent.webhookId || targetChannelConfig.webhookId,
-          webhookMessageId: sent.id,
-          status,
-          sentAt: new Date()
+  try {
+    const sent = await webhookService.sendMessage(targetChannelConfig, discordChannel, payload);
+    await MessageLog.updateOne(
+      { _id: logRecord._id },
+      {
+        $push: {
+          webhookMessages: {
+            guildId: targetChannelConfig.guildId,
+            channelId: targetChannelConfig.channelId,
+            webhookId: sent.webhookId || targetChannelConfig.webhookId,
+            webhookMessageId: sent.id,
+            status,
+            sentAt: new Date()
+          }
         }
       }
-    }
-  );
+    );
 
-  await SyncChannel.updateOne(
-    { channelId: targetChannelConfig.channelId },
-    {
-      $inc: { 'stats.received': 1 },
-      $set: { lastSyncAt: new Date() }
-    }
-  );
+    await SyncChannel.updateOne(
+      { channelId: targetChannelConfig.channelId },
+      {
+        $inc: { 'stats.received': 1 },
+        $set: { lastSyncAt: new Date(), failureCount: 0 }
+      }
+    );
 
-  return sent;
+    return sent;
+  } catch (error) {
+    await MessageLog.updateOne(
+      { _id: logRecord._id },
+      {
+        $push: {
+          webhookMessages: {
+            guildId: targetChannelConfig.guildId,
+            channelId: targetChannelConfig.channelId,
+            webhookId: targetChannelConfig.webhookId,
+            status: 'failed',
+            error: truncate(error.message || 'Unknown webhook failure', 500),
+            sentAt: new Date()
+          }
+        }
+      }
+    );
+    throw error;
+  }
 }
 
 async function handleMessageCreate(message) {
@@ -196,7 +267,7 @@ async function handleMessageCreate(message) {
   await addMessageXp(message, sourceChannel.network);
   const reply = await getReplyData(message);
   const logRecord = await createMessageLog(message, sourceChannel, inspection, reply);
-  const payload = buildPayloadFromLog(logRecord.toObject());
+  const payload = await buildPayloadFromLog(logRecord.toObject());
 
   const targets = await SyncChannel.find({
     network: sourceChannel.network,
@@ -268,7 +339,7 @@ async function handleMessageUpdate(oldMessage, newMessage) {
   logRecord.editedAt = new Date();
   await logRecord.save();
 
-  const payload = buildPayloadFromLog(logRecord.toObject());
+  const payload = await buildPayloadFromLog(logRecord.toObject());
 
   await Promise.allSettled(
     logRecord.webhookMessages

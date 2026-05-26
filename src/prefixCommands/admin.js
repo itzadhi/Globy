@@ -80,7 +80,7 @@ module.exports = [
         const records = await listNoPrefixUsers(15);
         const description = records.length
           ? records.map((record, index) => `${index + 1}. <@${record.userId}> - ${record.reason}`).join('\n')
-          : 'No database allowlist users yet. Developers and `NO_PREFIX_IDS` still work automatically.';
+          : 'No database allowlist users yet. Bot developers still work automatically.';
 
         const embed = new EmbedBuilder()
           .setColor(config.colors.primary)

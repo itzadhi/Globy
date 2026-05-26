@@ -5,7 +5,6 @@ const { isDeveloper } = require('../middleware/permissions');
 async function isNoPrefixAllowed(userId) {
   if (!config.commands.noPrefixEnabled) return false;
   if (isDeveloper(userId)) return true;
-  if (config.commands.noPrefixIds.includes(userId)) return true;
 
   const record = await NoPrefixUser.exists({
     userId,

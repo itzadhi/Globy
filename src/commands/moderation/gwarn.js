@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { createRestriction } = require('../../services/blacklistService');
 const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
+const { panelPayload } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -32,12 +33,12 @@ module.exports = {
       guildId: interaction.guildId
     });
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.warning)
-      .setTitle(`${emojis.warn} Global Warning Recorded`)
-      .setDescription(`${target} now has a global warning on record.`)
-      .addFields({ name: 'Reason', value: record.reason, inline: false });
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(panelPayload({
+      title: `${emojis.warn} Global Warning Recorded`,
+      description: `${target} now has a global warning on record.`,
+      accentColor: config.colors.warning,
+      ephemeral: true,
+      fields: [{ name: 'Reason', value: record.reason }]
+    }));
   }
 };

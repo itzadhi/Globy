@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { config } = require('../../config/env');
+const { SlashCommandBuilder } = require('discord.js');
+const { actionRow, infoPanel, linkButton } = require('../../utils/componentsV2');
 
 module.exports = {
   category: 'General',
@@ -14,12 +14,8 @@ module.exports = {
     const user = interaction.options.getUser('user') || interaction.user;
     const avatar = user.displayAvatarURL({ extension: 'png', size: 1024, forceStatic: false });
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.primary)
-      .setTitle(`${user.username}'s avatar`)
-      .setImage(avatar)
-      .setDescription(`[Open avatar](${avatar})`);
-
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(infoPanel(`${user.username}'s Avatar`, `[Open full-size avatar](${avatar})`, {
+      rows: [actionRow(linkButton('Open Avatar', avatar))]
+    }));
   }
 };

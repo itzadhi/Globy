@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { pingDatabase } = require('../../services/databaseService');
 const { formatDuration } = require('../../utils/time');
 const { config } = require('../../config/env');
+const { panelPayload } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -20,18 +21,16 @@ module.exports = {
     }));
     const color = database.ok && client.ws.ping < 250 ? config.colors.success : config.colors.warning;
 
-    const embed = new EmbedBuilder()
-      .setColor(color)
-      .setTitle(`${emojis.ping} Globy Status`)
-      .addFields(
-        { name: 'API Ping', value: `${apiLatency}ms`, inline: true },
-        { name: 'Database', value: database.ok ? `Connected (${database.latency}ms)` : `Offline: ${database.message}`, inline: true },
-        { name: 'WebSocket', value: `${client.ws.ping}ms`, inline: true },
-        { name: 'Uptime', value: formatDuration(client.uptime || 0), inline: true }
-      )
-      .setTimestamp()
-      .setFooter({ text: 'Globy CV2', iconURL: client.user.displayAvatarURL({ size: 64 }) });
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(panelPayload({
+      title: `${emojis.ping} Globy Status`,
+      description: 'Live runtime health for Globy CV2.',
+      accentColor: color,
+      fields: [
+        { name: 'API Ping', value: `${apiLatency}ms` },
+        { name: 'Database', value: database.ok ? `Connected (${database.latency}ms)` : `Offline: ${database.message}` },
+        { name: 'WebSocket', value: `${client.ws.ping}ms` },
+        { name: 'Uptime', value: formatDuration(client.uptime || 0) }
+      ]
+    }));
   }
 };

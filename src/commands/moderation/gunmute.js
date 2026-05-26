@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { liftRestriction } = require('../../services/blacklistService');
 const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
+const { successPanel } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -34,11 +35,8 @@ module.exports = {
 
     if (!modified) throw new Error('That user does not have an active global mute.');
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.success)
-      .setTitle(`${emojis.shield} Global Mute Removed`)
-      .setDescription(`${target} can send through Globy CV2 networks again.`);
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(successPanel(`${emojis.shield} Global Mute Removed`, `${target} can send through Globy CV2 synced chat again.`, {
+      ephemeral: true
+    }));
   }
 };

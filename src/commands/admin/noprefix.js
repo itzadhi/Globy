@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const {
   addNoPrefixUser,
   removeNoPrefixUser,
@@ -7,6 +7,7 @@ const {
 } = require('../../services/noPrefixService');
 const { isDeveloper } = require('../../middleware/permissions');
 const { config } = require('../../config/env');
+const { panelPayload, successPanel } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -53,16 +54,17 @@ module.exports = {
 
     if (action === 'status') {
       const allowed = await isNoPrefixAllowed(interaction.user.id);
-      const embed = new EmbedBuilder()
-        .setColor(config.colors.primary)
-        .setTitle(`${emojis.spark} No-Prefix Status`)
-        .setDescription([
-          `System: **${config.commands.noPrefixEnabled ? 'Enabled' : 'Disabled'}**`,
-          `You are allowed: **${allowed ? 'Yes' : 'No'}**`,
-          `Prefix: \`${config.commands.prefix}\``
-        ].join('\n'));
-
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply(panelPayload({
+        title: `${emojis.spark} No-Prefix Status`,
+        description: 'Only bot developers can grant no-prefix access.',
+        accentColor: config.colors.primary,
+        ephemeral: true,
+        fields: [
+          { name: 'System', value: config.commands.noPrefixEnabled ? 'Enabled' : 'Disabled' },
+          { name: 'You Are Allowed', value: allowed ? 'Yes' : 'No' },
+          { name: 'Prefix', value: `\`${config.commands.prefix}\`` }
+        ]
+      }));
       return;
     }
 
@@ -74,13 +76,10 @@ module.exports = {
       const user = interaction.options.getUser('user');
       const reason = interaction.options.getString('reason') || 'Trusted no-prefix user';
       const record = await addNoPrefixUser(user, interaction.user, reason);
-      const embed = new EmbedBuilder()
-        .setColor(config.colors.success)
-        .setTitle(`${emojis.spark} No-Prefix Added`)
-        .setDescription(`${user.tag || user.username} can now run prefix commands without \`${config.commands.prefix}\`.`)
-        .addFields({ name: 'Reason', value: record.reason, inline: false });
-
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply(successPanel(`${emojis.spark} No-Prefix Added`, `${user.tag || user.username} can now run prefix commands without \`${config.commands.prefix}\`.`, {
+        fields: [{ name: 'Reason', value: record.reason }],
+        ephemeral: true
+      }));
       return;
     }
 
@@ -90,25 +89,22 @@ module.exports = {
       const modified = await removeNoPrefixUser(user.id, interaction.user, reason);
       if (!modified) throw new Error('That user is not currently on the no-prefix allowlist.');
 
-      const embed = new EmbedBuilder()
-        .setColor(config.colors.success)
-        .setTitle(`${emojis.shield} No-Prefix Removed`)
-        .setDescription(`${user.tag || user.username} must use \`${config.commands.prefix}\` again.`);
-
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply(successPanel(`${emojis.shield} No-Prefix Removed`, `${user.tag || user.username} must use \`${config.commands.prefix}\` again.`, {
+        ephemeral: true
+      }));
       return;
     }
 
     const records = await listNoPrefixUsers(15);
     const description = records.length
       ? records.map((record, index) => `${index + 1}. <@${record.userId}> - ${record.reason}`).join('\n')
-      : 'No database allowlist users yet. Developers and `NO_PREFIX_IDS` still work automatically.';
+      : 'No database allowlist users yet. Bot developers still work automatically.';
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.primary)
-      .setTitle(`${emojis.spark} No-Prefix Allowlist`)
-      .setDescription(description);
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(panelPayload({
+      title: `${emojis.spark} No-Prefix Allowlist`,
+      description,
+      accentColor: config.colors.primary,
+      ephemeral: true
+    }));
   }
 };

@@ -1,135 +1,383 @@
 # Globy CV2
 
-Globy CV2 is a modern Discord cross-server communication bot. It connects text channels into named networks like `global`, `gaming`, `anime`, or `coding`, then mirrors messages across those channels through rich Discord webhooks.
+Globy CV2 is a production-oriented Discord cross-server communication bot. Server admins choose a channel, and Globy CV2 immediately starts mirroring messages across every connected channel using Discord webhooks.
 
-The project is built with Node.js, discord.js v14, MongoDB, Mongoose, and Canvas. It is intentionally modular so beginners can understand it and experienced maintainers can scale it.
+The project is built with:
 
-## Features
+- Node.js
+- discord.js v14.26+
+- MongoDB with Mongoose
+- Canvas
 
-- Cross-server message sync with webhooks
-- Network-based channel linking
-- Real username, avatar, and source server display
-- Text, replies, attachments, stickers, emoji, edits, and deletes
-- Webhook creation, reuse, cache, recovery, and fail protection
-- Global profile system with XP, levels, reputation, ranks, and leaderboards
-- Canvas profile, rank, and leaderboard cards
-- Global moderation: invite filter, spam protection, scam checks, toxic word filter, caps checks, repeated-message detection, emoji spam protection
-- Mention protection for `@everyone`, `@here`, roles, and mass mention abuse
-- Global blacklist, mute, warn, and moderation logs
-- MongoDB-backed message logs and `/recovermessages`
-- Premium slash command UI with embeds, buttons, and menus
+The architecture is intentionally simple: commands call services, services use models, and MongoDB stays the source of truth.
 
-## Quick Start
+## What Globy CV2 Does
 
-1. Install Node.js 18.17 or newer.
-2. Clone the repository.
-3. Run `npm install`.
-4. Copy `.env.example` to `.env`.
-5. Fill in `DISCORD_TOKEN`, `CLIENT_ID`, `MONGO_URI`, and `DEV_IDS`.
-6. Enable these Discord Developer Portal bot intents:
+- Syncs messages across servers in real time
+- Uses webhooks so synced messages keep the real username and avatar
+- Keeps synced webhook messages clean: only the user message content is shown
+- Supports text, replies, attachments, stickers, emoji, edits, and deletes
+- Stores message recovery data in MongoDB
+- Rebuilds broken webhook messages with `/recovermessages`
+- Tracks global XP, levels, ranks, message counts, and reputation
+- Generates Canvas profile, rank, and leaderboard cards
+- Blocks dangerous pings before sync
+- Filters spam, scam patterns, invite links, caps spam, repeat spam, and emoji spam
+- Supports slash commands, comma-prefix commands, and developer-granted no-prefix commands
+- Uses Discord Components V2 panels without colored sidebars for command UI
+
+## Folder Map
+
+```text
+src/
+├── commands/        Slash commands
+├── prefixCommands/  Comma-prefix and no-prefix message commands
+├── events/          Discord gateway event listeners
+├── handlers/        Startup command/event loaders
+├── models/          Mongoose schemas
+├── services/        Sync, webhook, XP, recovery, moderation, and health logic
+├── middleware/      Permission checks
+├── utils/           Text, time, Components V2, logging, and file helpers
+├── cache/           In-memory cooldown/webhook caches
+├── canvas/          Profile, rank, and leaderboard card renderers
+└── config/          Environment and emoji config
+```
+
+## Install
+
+```bash
+npm install
+```
+
+Use Node.js 18.17 or newer.
+
+## Environment Setup
+
+Create `.env` from the example:
+
+```bash
+cp .env.example .env
+```
+
+On PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Required values:
+
+```text
+DISCORD_TOKEN=your_bot_token
+CLIENT_ID=your_application_id
+MONGO_URI=your_mongodb_connection_string
+DEV_IDS=your_discord_user_id
+```
+
+Command settings:
+
+```text
+PREFIX=,
+NO_PREFIX_ENABLED=true
+```
+
+No-prefix access is automatic for `DEV_IDS`. Extra users must be granted by a bot developer with `/noprefix add` or `,noprefix add`.
+
+Never commit `.env`. It is ignored by Git.
+
+## Discord Developer Portal
+
+In the Discord Developer Portal:
+
+1. Open your application.
+2. Go to the Bot page.
+3. Enable these privileged intents:
    - Server Members Intent
    - Message Content Intent
-7. Invite the bot with these permissions:
-   - Manage Webhooks
-   - Send Messages
-   - Embed Links
-   - Attach Files
-   - Read Message History
-   - View Channel
-   - Manage Messages
-8. Deploy slash commands:
+4. Copy the bot token into `.env`.
+5. Copy the application ID into `CLIENT_ID`.
+
+## Invite Permissions
+
+Invite the bot with:
+
+- `bot`
+- `applications.commands`
+
+Recommended bot permissions:
+
+- View Channel
+- Send Messages
+- Manage Webhooks
+- Embed Links
+- Attach Files
+- Read Message History
+- Manage Messages
+
+Webhook sync will not work without `Manage Webhooks` in every connected channel.
+
+## Deploy Slash Commands
+
+Deploy global commands:
 
 ```bash
 npm run deploy:commands
 ```
 
-9. Start the bot:
+The deploy script prints the command names Discord accepted. Global commands can take time to appear in the Discord client.
+
+For instant testing in one server, set a guild ID:
+
+```powershell
+$env:DEPLOY_GUILD_ID="your_test_server_id"
+$env:DEPLOY_SCOPE="guild"
+npm run deploy:commands
+```
+
+Deploy both guild and global:
+
+```powershell
+$env:DEPLOY_GUILD_ID="your_test_server_id"
+$env:DEPLOY_SCOPE="both"
+npm run deploy:commands
+```
+
+If slash commands are not showing:
+
+- Run `npm run deploy:commands`.
+- Check that the bot was invited with `applications.commands`.
+- If using global deploy, wait for Discord propagation.
+- For immediate testing, use `DEPLOY_SCOPE=guild`.
+- Make sure you are using the same `CLIENT_ID` as the bot token.
+
+## Start
 
 ```bash
 npm start
 ```
 
-## Main Commands
-
-| Category | Commands |
-| --- | --- |
-| General | `/help`, `/ping`, `/stats`, `/userinfo`, `/serverinfo`, `/avatar`, `/invite`, `/about` |
-| Sync | `/setchannel`, `/removechannel`, `/networkinfo`, `/recovermessages` |
-| Profile | `/profile`, `/rank`, `/leaderboard`, `/rep` |
-| Moderation | `/gban`, `/gunban`, `/gmute`, `/gunmute`, `/gwarn` |
-| Admin | `/noprefix` |
-
-## Prefix Commands
-
-Globy CV2 also supports lightweight message commands. The default prefix is a comma:
+Health endpoints:
 
 ```text
-,ping
-,help
-,setchannel #global-chat global
+GET /
+GET /health
 ```
 
-Trusted users can be allowed to run commands without the prefix:
+## Connecting Channels
+
+Only the server owner or a user with Administrator permission can connect channels.
+
+Slash:
+
+```text
+/setchannel channel:#global-chat
+```
+
+Prefix:
+
+```text
+,setchannel #global-chat
+```
+
+Run the same setup command in each server/channel you want connected. There is no public network argument to type.
+
+## Sync Health
+
+Use this first when sync or webhooks do not work.
+
+Slash:
+
+```text
+/synchealth channel:#global-chat repair:true
+```
+
+Prefix:
+
+```text
+,synchealth #global-chat repair
+```
+
+It reports:
+
+- Whether the channel is connected
+- Target channel count
+- Webhook status
+- Missing bot permissions
+- Failed webhook copies
+- Stored failure count
+
+## Recovery
+
+Recover missing or deleted webhook messages:
+
+```text
+/recovermessages limit:25 force:true
+```
+
+Prefix:
+
+```text
+,recovermessages 25 force
+```
+
+Recovery reads MongoDB `MessageLogs`, recreates missing webhook copies, avoids healthy duplicates, and queues sends to reduce rate-limit risk.
+
+## Commands
+
+General:
+
+- `/help`, `,help`
+- `/ping`, `,ping`
+- `/stats`, `,stats`
+- `/userinfo`, `,userinfo`
+- `/serverinfo`, `,serverinfo`
+- `/avatar`, `,avatar`
+- `/invite`, `,invite`
+- `/about`, `,about`
+
+Sync:
+
+- `/setchannel`, `,setchannel`
+- `/removechannel`, `,removechannel`
+- `/synchealth`, `,synchealth`
+- `/recovermessages`, `,recovermessages`
+
+Profile:
+
+- `/profile`, `,profile`
+- `/rank`, `,rank`
+- `/leaderboard`, `,leaderboard`
+- `/rep`, `,rep`
+
+Moderation:
+
+- `/gban`, `,gban`
+- `/gunban`, `,gunban`
+- `/gmute`, `,gmute`
+- `/gunmute`, `,gunmute`
+- `/gwarn`, `,gwarn`
+
+Admin:
+
+- `/noprefix`
+- `,noprefix`
+
+## No-Prefix System
+
+Bot developers are defined in `.env`:
+
+```text
+DEV_IDS=123456789012345678
+```
+
+Developers can grant no-prefix access:
+
+```text
+/noprefix add user:@User reason:Trusted staff
+,noprefix add @User Trusted staff
+```
+
+Remove access:
+
+```text
+/noprefix remove user:@User
+,noprefix remove @User
+```
+
+A no-prefix user can run:
 
 ```text
 ping
 help sync
+profile
 ```
 
-Developers listed in `DEV_IDS` automatically have no-prefix access. Additional users can be added with `/noprefix add` or `,noprefix add @user`.
+No-prefix command messages are handled before sync, so they will not be mirrored to other servers.
 
-## Connecting Channels
+## Webhook Sync Details
 
-Only the server owner or users with Administrator permission can configure synced channels.
+For each connected channel, Globy CV2:
 
-Example:
+1. Checks bot permissions.
+2. Finds or creates a webhook.
+3. Stores webhook ID/token in MongoDB.
+4. Caches webhook credentials in memory.
+5. Sends synced messages through the target channel webhook.
+6. Stores every webhook message ID for edits, deletes, and recovery.
+7. Recreates broken webhooks when Discord reports deleted/invalid webhook errors.
 
-```text
-/setchannel channel:#global-chat network:global
-```
+Attachments are uploaded when small enough. If upload fails or the file is too large, Globy CV2 keeps the sync alive and includes clean attachment links instead of failing the whole webhook send.
 
-Any other channel connected to `global` will receive messages from that channel. Network names are lowercase, short, and easy to remember.
+## Moderation and Safety
 
-## Environment Variables
+Before syncing, Globy CV2 checks:
 
-See `.env.example` for the complete list. Never commit `.env` to GitHub.
+- `@everyone` and `@here`
+- Role mention abuse
+- Mass mention spam
+- Invite links
+- Scam patterns
+- Toxic words from `TOXIC_WORDS`
+- Excessive caps
+- Repeated messages
+- Emoji spam
+- Rapid spam
+- Global bans and mutes
 
-Important variables:
+Synced webhook messages use empty `allowedMentions`, so dangerous mentions cannot ping people across servers.
 
-- `DISCORD_TOKEN`: your bot token
-- `CLIENT_ID`: Discord application client ID
-- `MONGO_URI`: MongoDB connection string
-- `DEV_IDS`: bot developer IDs, comma-separated
-- `PREFIX`: message command prefix, default `,`
-- `NO_PREFIX_ENABLED`: enables trusted no-prefix commands
-- `NO_PREFIX_IDS`: optional comma-separated user IDs with no-prefix access
-- `TOXIC_WORDS`: optional comma-separated moderation list
-- `EMOJI_*`: optional custom emoji markup for premium UI
+## MongoDB Collections
 
-## MongoDB
-
-Globy CV2 uses Mongoose models with indexes for connected channels, networks, profiles, blacklists, moderation logs, and message recovery logs. MongoDB Atlas works well for production.
-
-Recommended production settings:
-
-- Use a dedicated database user with a strong password.
-- Restrict network access where possible.
-- Enable backups.
-- Watch storage growth for `MessageLogs`.
-
-## Scaling Tips
-
-- Keep webhook permissions healthy in every connected channel.
-- Use network names to split large communities by topic.
-- Keep `SYNC_QUEUE_DELAY` above `500ms` for very large deployments.
-- Use MongoDB Atlas indexes and monitor slow queries.
-- Rotate Discord tokens immediately if they are ever shared publicly.
+- `Users`: basic Discord user cache
+- `Guilds`: server settings and sync state
+- `Networks`: internal routing stats and feature switches
+- `Channels`: connected channels and webhook credentials
+- `Profiles`: XP, level, rank, rep, message counts
+- `XPs`: XP audit events
+- `ModerationLogs`: blocked messages, actions, webhook failures, recovery logs
+- `Blacklists`: global bans, mutes, warnings
+- `MessageLogs`: original and webhook message mapping for recovery
+- `Settings`: future scoped settings
+- `NoPrefixUsers`: developer-granted no-prefix access
 
 ## Troubleshooting
 
-- Commands do not appear: run `npm run deploy:commands` and wait a few minutes for global command propagation.
-- Messages do not sync: check bot permissions in both source and target channels.
-- Webhooks fail: delete the broken channel connection with `/removechannel`, then run `/setchannel` again, or use `/recovermessages`.
-- Canvas install fails: install system build tools required by `canvas`, then run `npm install` again.
+Slash commands do not show:
 
-More detailed setup notes are in `docs/SETUP.md`.
+- Run `npm run deploy:commands`.
+- Confirm `CLIENT_ID` is the application ID.
+- Reinvite the bot with `applications.commands`.
+- Use guild deploy for instant testing.
+
+Messages do not sync:
+
+- Run `/synchealth repair:true`.
+- Make sure `/setchannel` has been run in both channels.
+- Check `Manage Webhooks`, `View Channel`, `Send Messages`, `Embed Links`, `Attach Files`, and `Read Message History`.
+
+Webhooks fail:
+
+- Run `/synchealth repair:true`.
+- Check whether another bot/user deleted the webhook.
+- Re-run `/setchannel` if the channel was deleted and recreated.
+- Use `/recovermessages` after repairing.
+
+Leaderboard looks empty:
+
+- Users need to send messages in connected sync channels to gain XP.
+- XP has a cooldown to prevent farming.
+- Blacklisted users do not gain XP.
+
+Canvas install fails:
+
+- Make sure Node.js is modern.
+- Install native build requirements for `canvas` on your OS.
+- Run `npm install` again.
+
+## Production Notes
+
+- Rotate tokens immediately if they are shared anywhere.
+- Use MongoDB Atlas backups.
+- Keep `SYNC_QUEUE_DELAY` above `500ms` for large deployments.
+- Monitor `MessageLogs` growth.
+- Use `/synchealth` after permission or channel changes.

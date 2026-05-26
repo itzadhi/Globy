@@ -1,6 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { config } = require('../../config/env');
+const { SlashCommandBuilder } = require('discord.js');
 const { discordTimestamp } = require('../../utils/time');
+const { infoPanel } = require('../../utils/componentsV2');
 
 module.exports = {
   category: 'General',
@@ -15,17 +15,13 @@ module.exports = {
     const user = interaction.options.getUser('user') || interaction.user;
     const member = interaction.guild ? await interaction.guild.members.fetch(user.id).catch(() => null) : null;
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.primary)
-      .setTitle(user.tag || user.username)
-      .setThumbnail(user.displayAvatarURL({ extension: 'png', size: 256 }))
-      .addFields(
-        { name: 'User ID', value: user.id, inline: false },
-        { name: 'Created', value: discordTimestamp(user.createdAt, 'D'), inline: true },
-        { name: 'Joined', value: member?.joinedAt ? discordTimestamp(member.joinedAt, 'D') : 'Not in this server', inline: true },
-        { name: 'Bot', value: user.bot ? 'Yes' : 'No', inline: true }
-      );
-
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(infoPanel(user.tag || user.username, 'Discord account information.', {
+      fields: [
+        { name: 'User ID', value: user.id },
+        { name: 'Created', value: discordTimestamp(user.createdAt, 'D') },
+        { name: 'Joined', value: member?.joinedAt ? discordTimestamp(member.joinedAt, 'D') : 'Not in this server' },
+        { name: 'Bot', value: user.bot ? 'Yes' : 'No' }
+      ]
+    }));
   }
 };

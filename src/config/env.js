@@ -33,8 +33,7 @@ const config = {
   port: number(process.env.PORT, 3000),
   commands: {
     prefix: process.env.PREFIX || ',',
-    noPrefixEnabled: process.env.NO_PREFIX_ENABLED !== 'false',
-    noPrefixIds: list(process.env.NO_PREFIX_IDS)
+    noPrefixEnabled: process.env.NO_PREFIX_ENABLED !== 'false'
   },
   colors: {
     primary: process.env.EMBED_COLOR || '#00E5FF',
@@ -45,6 +44,7 @@ const config = {
   },
   sync: {
     webhookName: process.env.WEBHOOK_NAME || 'Globy CV2 Sync',
+    defaultNetwork: process.env.DEFAULT_NETWORK || 'global',
     queueDelayMs: duration(process.env.SYNC_QUEUE_DELAY, '650ms'),
     recoveryDelayMs: duration(process.env.RECOVERY_BATCH_DELAY, '1200ms'),
     maxRecoveryLimit: number(process.env.MAX_RECOVERY_LIMIT, 100)

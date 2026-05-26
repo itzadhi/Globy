@@ -1,9 +1,9 @@
-const { SlashCommandBuilder, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, ChannelType } = require('discord.js');
 const { recoverNetwork } = require('../../services/recoveryService');
 const { logRecoverySession } = require('../../services/loggingService');
 const { isOwnerOrAdmin } = require('../../middleware/permissions');
-const { normalizeNetworkName, isValidNetworkName } = require('../../utils/text');
 const { config } = require('../../config/env');
+const { panelPayload } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
@@ -11,9 +11,6 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('recovermessages')
     .setDescription('Recover deleted or missing webhook messages from MongoDB logs.')
-    .addStringOption((option) =>
-      option.setName('network').setDescription('Network to recover.').setRequired(true)
-    )
     .addIntegerOption((option) =>
       option
         .setName('limit')
@@ -43,8 +40,7 @@ module.exports = {
       throw new Error('Only the server owner or users with Administrator permission can recover synced messages.');
     }
 
-    const network = normalizeNetworkName(interaction.options.getString('network'));
-    if (!isValidNetworkName(network)) throw new Error('Invalid network name.');
+    const network = config.sync.defaultNetwork;
 
     const sourceChannel = interaction.options.getChannel('source_channel');
     const summary = await recoverNetwork(client, {
@@ -56,18 +52,17 @@ module.exports = {
 
     await logRecoverySession(interaction, network, summary);
 
-    const embed = new EmbedBuilder()
-      .setColor(summary.failed ? config.colors.warning : config.colors.success)
-      .setTitle(`${emojis.recover} Recovery Complete`)
-      .setDescription(`Recovery session finished for **${network}**.`)
-      .addFields(
-        { name: 'Scanned', value: `${summary.scanned}`, inline: true },
-        { name: 'Recovered', value: `${summary.recovered}`, inline: true },
-        { name: 'Skipped', value: `${summary.skipped}`, inline: true },
-        { name: 'Failed', value: `${summary.failed}`, inline: true }
-      )
-      .setTimestamp();
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(panelPayload({
+      title: `${emojis.recover} Recovery Complete`,
+      description: 'Recovery session finished.',
+      accentColor: summary.failed ? config.colors.warning : config.colors.success,
+      ephemeral: true,
+      fields: [
+        { name: 'Scanned', value: `${summary.scanned}` },
+        { name: 'Recovered', value: `${summary.recovered}` },
+        { name: 'Skipped', value: `${summary.skipped}` },
+        { name: 'Failed', value: `${summary.failed}` }
+      ]
+    }));
   }
 };

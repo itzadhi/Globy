@@ -102,6 +102,21 @@ function drawMetric(ctx, label, value, x, y) {
   ctx.fillText(String(value), x + 75, y + 56);
 }
 
+function fitText(ctx, text, x, y, maxWidth, font, fallback = 'Unknown') {
+  const value = String(text || fallback);
+  ctx.font = font;
+  if (ctx.measureText(value).width <= maxWidth) {
+    ctx.fillText(value, x, y);
+    return;
+  }
+
+  let trimmed = value;
+  while (trimmed.length > 3 && ctx.measureText(`${trimmed}...`).width > maxWidth) {
+    trimmed = trimmed.slice(0, -1);
+  }
+  ctx.fillText(`${trimmed}...`, x, y);
+}
+
 async function createProfileCard(user, profile, rank = null) {
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext('2d');
@@ -145,46 +160,103 @@ async function createRankCard(user, rankInfo) {
 }
 
 async function createLeaderboardCard(entries) {
-  const height = 160 + Math.max(1, entries.length) * 58;
-  const canvas = createCanvas(900, height);
+  const rowHeight = 82;
+  const height = 190 + Math.max(1, entries.length) * rowHeight;
+  const canvas = createCanvas(1000, height);
   const ctx = canvas.getContext('2d');
 
-  drawBackground(ctx, 900, height);
-  fillRoundRect(ctx, 34, 34, 832, height - 68, 18, 'rgba(3, 9, 18, 0.72)');
+  drawBackground(ctx, 1000, height);
+  fillRoundRect(ctx, 34, 34, 932, height - 68, 18, 'rgba(3, 9, 18, 0.78)');
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 38px Arial';
+  ctx.font = 'bold 42px Arial';
   ctx.textAlign = 'left';
   ctx.fillText('Global Leaderboard', 70, 92);
 
   ctx.fillStyle = '#93A4B8';
   ctx.font = '18px Arial';
-  ctx.fillText('Top synchronized profiles across all Globy CV2 networks', 72, 122);
+  ctx.fillText('Top synchronized profiles across every Globy CV2 network', 72, 124);
 
-  let y = 160;
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#35FF95';
+  ctx.font = 'bold 20px Arial';
+  ctx.fillText(`${entries.length} ranked users`, 930, 94);
+
+  const avatars = await Promise.all(entries.map((entry) => loadRemoteImage(entry.avatar)));
+  let y = 180;
   for (const entry of entries) {
-    fillRoundRect(ctx, 70, y - 34, 760, 48, 8, entry.rank === 1 ? 'rgba(53, 255, 149, 0.16)' : 'rgba(255,255,255,0.07)');
+    const avatar = avatars[entry.rank - 1];
+    const isTopThree = entry.rank <= 3;
+    const rowColor = entry.rank === 1
+      ? 'rgba(53, 255, 149, 0.18)'
+      : isTopThree
+        ? 'rgba(0, 229, 255, 0.13)'
+        : 'rgba(255,255,255,0.075)';
+
+    fillRoundRect(ctx, 70, y - 44, 860, 66, 10, rowColor);
+
     ctx.fillStyle = entry.rank === 1 ? '#35FF95' : '#00E5FF';
-    ctx.font = 'bold 22px Arial';
+    ctx.font = 'bold 24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`#${entry.rank}`, 112, y - 3);
+    ctx.fillText(`#${entry.rank}`, 112, y - 5);
+
+    drawCircleAvatar(ctx, avatar, 156, y - 33, 48, entry.username);
 
     ctx.textAlign = 'left';
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 21px Arial';
-    ctx.fillText(entry.globalName || entry.username, 158, y - 4);
+    fitText(ctx, entry.globalName || entry.username, 220, y - 12, 300, 'bold 23px Arial', entry.username);
 
     ctx.fillStyle = '#93A4B8';
     ctx.font = '17px Arial';
-    ctx.fillText(`Level ${entry.level || 0} • ${entry.totalXp || 0} XP • ${entry.reputation || 0} rep`, 500, y - 4);
-    y += 58;
+    ctx.fillText(`@${entry.username}`, 220, y + 13);
+
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#D8F7FF';
+    ctx.font = 'bold 19px Arial';
+    ctx.fillText(`Level ${entry.level || 0}`, 640, y - 13);
+    ctx.fillText(`${entry.totalXp || 0} XP`, 795, y - 13);
+    ctx.fillText(`${entry.reputation || 0} rep`, 900, y - 13);
+
+    drawProgressBar(ctx, 535, y + 3, 365, 12, entry.progress?.percent || 0);
+    y += rowHeight;
   }
 
+  return canvas.toBuffer('image/png');
+}
+
+async function createSetupBanner(client, channel) {
+  const canvas = createCanvas(1000, 300);
+  const ctx = canvas.getContext('2d');
+  const botAvatar = await loadRemoteImage(client.user.displayAvatarURL({ extension: 'png', size: 256 }));
+
+  drawBackground(ctx, 1000, 300);
+  fillRoundRect(ctx, 34, 34, 932, 232, 18, 'rgba(3, 9, 18, 0.78)');
+  drawCircleAvatar(ctx, botAvatar, 70, 74, 150, client.user.username);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#35FF95';
+  ctx.font = 'bold 24px Arial';
+  ctx.fillText('SYNC READY', 260, 92);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 42px Arial';
+  fitText(ctx, `#${channel.name}`, 260, 142, 580, 'bold 42px Arial', channel.name);
+
+  ctx.fillStyle = '#D8F7FF';
+  ctx.font = '22px Arial';
+  ctx.fillText('Globy CV2 will start syncing messages from this channel now.', 262, 184);
+
+  ctx.fillStyle = '#93A4B8';
+  ctx.font = '18px Arial';
+  ctx.fillText('Ready to send and receive global chat messages.', 262, 222);
+
+  drawProgressBar(ctx, 260, 240, 620, 12, 100);
   return canvas.toBuffer('image/png');
 }
 
 module.exports = {
   createProfileCard,
   createRankCard,
-  createLeaderboardCard
+  createLeaderboardCard,
+  createSetupBanner
 };

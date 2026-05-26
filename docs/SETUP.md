@@ -45,10 +45,9 @@ Useful command settings:
 ```text
 PREFIX=,
 NO_PREFIX_ENABLED=true
-NO_PREFIX_IDS=
 ```
 
-`DEV_IDS` users automatically get no-prefix access. Add extra trusted users later with `/noprefix add` or `,noprefix add @user`.
+`DEV_IDS` users automatically get no-prefix access. Bot developers can add extra trusted users later with `/noprefix add` or `,noprefix add @user`.
 
 ## 4. Deploy Slash Commands
 
@@ -57,6 +56,16 @@ npm run deploy:commands
 ```
 
 For fast testing in one guild, temporarily add `GUILD_ID=your_test_server_id` to `.env`. Remove it when deploying globally.
+
+PowerShell one-off guild deploy:
+
+```powershell
+$env:DEPLOY_GUILD_ID="your_test_server_id"
+$env:DEPLOY_SCOPE="guild"
+npm run deploy:commands
+```
+
+The deploy script prints the commands Discord accepted. If commands do not show, verify `applications.commands` was selected when inviting the bot.
 
 ## 5. Start
 
@@ -92,16 +101,22 @@ Recommended bot permissions:
 Run this in every server/channel you want connected:
 
 ```text
-/setchannel channel:#global-chat network:global
+/setchannel channel:#global-chat
 ```
 
 Or with prefix commands:
 
 ```text
-,setchannel #global-chat global
+,setchannel #global-chat
 ```
 
-Messages sent in any connected `global` channel will sync to the others.
+Messages sent in any connected channel will sync to the others.
+
+Check sync health:
+
+```text
+/synchealth channel:#global-chat repair:true
+```
 
 ## Security Reminder
 

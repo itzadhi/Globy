@@ -1,6 +1,6 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { config } = require('../../config/env');
+const { SlashCommandBuilder } = require('discord.js');
 const { discordTimestamp } = require('../../utils/time');
+const { infoPanel } = require('../../utils/componentsV2');
 
 module.exports = {
   category: 'General',
@@ -12,17 +12,13 @@ module.exports = {
     const guild = interaction.guild;
     const owner = await guild.fetchOwner().catch(() => null);
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.primary)
-      .setTitle(guild.name)
-      .setThumbnail(guild.iconURL({ size: 256 }))
-      .addFields(
-        { name: 'Owner', value: owner ? `${owner.user.tag}` : 'Unknown', inline: true },
-        { name: 'Members', value: `${guild.memberCount}`, inline: true },
-        { name: 'Created', value: discordTimestamp(guild.createdAt, 'D'), inline: true },
-        { name: 'Server ID', value: guild.id, inline: false }
-      );
-
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply(infoPanel(guild.name, 'Server information for this Discord community.', {
+      fields: [
+        { name: 'Owner', value: owner ? `${owner.user.tag}` : 'Unknown' },
+        { name: 'Members', value: `${guild.memberCount}` },
+        { name: 'Created', value: discordTimestamp(guild.createdAt, 'D') },
+        { name: 'Server ID', value: guild.id }
+      ]
+    }));
   }
 };

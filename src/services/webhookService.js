@@ -20,8 +20,8 @@ function isRecoverableWebhookError(error) {
   return [10015, 50027, 10008].includes(error?.code);
 }
 
-function safePayload(payload) {
-  return {
+function safePayload(payload, options = {}) {
+  const next = {
     ...payload,
     content: truncate(payload.content || '', 1950),
     allowedMentions: {
@@ -31,6 +31,12 @@ function safePayload(payload) {
       repliedUser: false
     }
   };
+
+  if (options.dropFiles) {
+    delete next.files;
+  }
+
+  return next;
 }
 
 async function createWebhook(discordChannel) {
@@ -98,6 +104,17 @@ async function sendMessage(syncChannel, discordChannel, payload) {
     await logWebhookFailure(syncChannel, error.message, { code: error.code });
     await SyncChannel.updateOne({ channelId: syncChannel.channelId }, { $inc: { failureCount: 1 } });
 
+    if (payload.files?.length) {
+      try {
+        return await client.send(safePayload(payload, { dropFiles: true }));
+      } catch (filelessError) {
+        await logWebhookFailure(syncChannel, filelessError.message, {
+          code: filelessError.code,
+          fallback: 'fileless'
+        });
+      }
+    }
+
     if (!isRecoverableWebhookError(error)) throw error;
 
     client = await recreateWebhook(syncChannel, discordChannel);
@@ -109,7 +126,7 @@ async function editMessage(syncChannel, discordChannel, webhookMessageId, payloa
   let client = await resolveWebhook(syncChannel, discordChannel);
 
   try {
-    return await client.editMessage(webhookMessageId, safePayload(payload));
+    return await client.editMessage(webhookMessageId, safePayload(payload, { dropFiles: true }));
   } catch (error) {
     await logWebhookFailure(syncChannel, error.message, { code: error.code, webhookMessageId });
     if (!isRecoverableWebhookError(error)) throw error;

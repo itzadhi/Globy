@@ -1,15 +1,16 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { createRestriction } = require('../../services/blacklistService');
 const { canUseGlobalModeration } = require('../../middleware/permissions');
 const { discordTimestamp } = require('../../utils/time');
 const { config } = require('../../config/env');
+const { panelPayload } = require('../../utils/componentsV2');
 const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Moderation',
   data: new SlashCommandBuilder()
     .setName('gban')
-    .setDescription('Globally ban a user from Globy CV2 networks.')
+    .setDescription('Globally ban a user from Globy CV2 synced chat.')
     .addUserOption((option) =>
       option.setName('user').setDescription('The user to ban.').setRequired(true)
     )
@@ -39,15 +40,15 @@ module.exports = {
       guildId: interaction.guildId
     });
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.error)
-      .setTitle(`${emojis.shield} Global Ban Added`)
-      .setDescription(`${target} can no longer sync messages, gain XP, or use Globy CV2 networks.`)
-      .addFields(
-        { name: 'Reason', value: record.reason, inline: false },
-        { name: 'Expires', value: record.expiresAt ? discordTimestamp(record.expiresAt, 'R') : 'Never', inline: true }
-      );
-
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply(panelPayload({
+      title: `${emojis.shield} Global Ban Added`,
+      description: `${target} can no longer sync messages, gain XP, or use Globy CV2 synced chat.`,
+      accentColor: config.colors.error,
+      ephemeral: true,
+      fields: [
+        { name: 'Reason', value: record.reason },
+        { name: 'Expires', value: record.expiresAt ? discordTimestamp(record.expiresAt, 'R') : 'Never' }
+      ]
+    }));
   }
 };

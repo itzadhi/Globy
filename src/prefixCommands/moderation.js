@@ -41,8 +41,8 @@ async function restrictionCommand(message, args, context, type) {
     .setTitle(type === 'ban' ? `${emojis.shield} Global Ban Added` : `${emojis.warn} Global Mute Added`)
     .setDescription(
       type === 'ban'
-        ? `${target} can no longer sync messages, gain XP, or use Globy CV2 networks.`
-        : `${target} cannot send messages through Globy CV2 networks.`
+        ? `${target} can no longer sync messages, gain XP, or use Globy CV2 synced chat.`
+        : `${target} cannot send messages through Globy CV2 synced chat.`
     )
     .addFields(
       { name: 'Reason', value: record.reason, inline: false },
@@ -72,8 +72,8 @@ async function liftCommand(message, args, context, type) {
     .setTitle(type === 'ban' ? `${emojis.shield} Global Ban Removed` : `${emojis.shield} Global Mute Removed`)
     .setDescription(
       type === 'ban'
-        ? `${target} can use Globy CV2 networks again.`
-        : `${target} can send through Globy CV2 networks again.`
+        ? `${target} can use Globy CV2 synced chat again.`
+        : `${target} can send through Globy CV2 synced chat again.`
     );
 
   await safeReply(message, { embeds: [embed] });
@@ -85,7 +85,7 @@ module.exports = [
     aliases: ['globalban'],
     category: 'Moderation',
     usage: 'gban @user [duration] <reason>',
-    description: 'Globally ban a user from Globy CV2 networks.',
+    description: 'Globally ban a user from Globy CV2 synced chat.',
     async execute(message, args, context) {
       await restrictionCommand(message, args, context, 'ban');
     }
@@ -105,7 +105,7 @@ module.exports = [
     aliases: ['globalmute'],
     category: 'Moderation',
     usage: 'gmute @user [duration] <reason>',
-    description: 'Globally mute a user from Globy CV2 networks.',
+    description: 'Globally mute a user from Globy CV2 synced chat.',
     async execute(message, args, context) {
       await restrictionCommand(message, args, context, 'mute');
     }

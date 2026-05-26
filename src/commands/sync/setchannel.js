@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, ChannelType, AttachmentBuilder } = require('discord.js');
 const SyncChannel = require('../../models/Channel');
 const Network = require('../../models/Network');
 const Guild = require('../../models/Guild');
@@ -10,29 +10,20 @@ const {
   missingBotPermissions,
   permissionNames
 } = require('../../middleware/permissions');
-const { normalizeNetworkName, isValidNetworkName } = require('../../utils/text');
+const { createSetupBanner } = require('../../canvas/cardRenderer');
 const { config } = require('../../config/env');
-const emojis = require('../../config/emojis');
 
 module.exports = {
   category: 'Sync',
   data: new SlashCommandBuilder()
     .setName('setchannel')
-    .setDescription('Connect a text channel to a Globy CV2 network.')
+    .setDescription('Make a text channel ready for Globy CV2 sync.')
     .addChannelOption((option) =>
       option
         .setName('channel')
         .setDescription('The text channel to connect.')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(true)
-    )
-    .addStringOption((option) =>
-      option
-        .setName('network')
-        .setDescription('Network name, like global, gaming, anime, tamil, or coding.')
-        .setRequired(true)
-        .setMinLength(2)
-        .setMaxLength(32)
     ),
 
   async execute(interaction, client) {
@@ -43,16 +34,13 @@ module.exports = {
     }
 
     const channel = interaction.options.getChannel('channel');
-    const network = normalizeNetworkName(interaction.options.getString('network'));
-
-    if (!isValidNetworkName(network)) {
-      throw new Error('Network names must be 2-32 characters and only use lowercase letters, numbers, dashes, or underscores.');
-    }
+    const network = config.sync.defaultNetwork;
 
     if (!isSupportedTextChannel(channel)) {
       throw new Error('Only regular text channels can be connected.');
     }
 
+    await interaction.guild.members.fetchMe().catch(() => null);
     const missing = missingBotPermissions(channel);
     if (missing.length) {
       throw new Error(`I need these permissions in ${channel}: ${permissionNames(missing).join(', ')}.`);
@@ -65,11 +53,11 @@ module.exports = {
     });
 
     if (existing) {
-      throw new Error(`${channel} is already connected to the **${existing.network}** network.`);
+      throw new Error(`${channel} is already connected and ready to sync.`);
     }
 
     await upsertGuild(interaction.guild);
-    const networkRecord = await Network.findOneAndUpdate(
+    await Network.findOneAndUpdate(
       { name: network },
       {
         $set: {
@@ -103,17 +91,11 @@ module.exports = {
     await Network.updateOne({ name: network }, { $set: { channelCount: activeCount } });
     await Guild.updateOne({ guildId: interaction.guildId }, { $addToSet: { networks: network } });
 
-    const embed = new EmbedBuilder()
-      .setColor(config.colors.success)
-      .setTitle(`${emojis.link} Channel Connected`)
-      .setDescription(`${channel} is now connected to **${networkRecord.displayName}**.`)
-      .addFields(
-        { name: 'Network', value: network, inline: true },
-        { name: 'Connected Channels', value: `${activeCount}`, inline: true },
-        { name: 'Webhook', value: 'Ready and cached', inline: true }
-      )
-      .setFooter({ text: 'Messages sent here will sync through Globy CV2.' });
-
-    await interaction.editReply({ embeds: [embed] });
+    const banner = await createSetupBanner(client, channel);
+    await interaction.editReply({
+      content: `${channel} is ready. Start chatting and Globy CV2 will sync it.`,
+      files: [new AttachmentBuilder(banner, { name: 'globy-sync-ready.png' })],
+      allowedMentions: { parse: [], users: [], roles: [] }
+    });
   }
 };

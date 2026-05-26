@@ -5,13 +5,13 @@ const {
   ButtonStyle
 } = require('discord.js');
 const SyncChannel = require('../models/Channel');
-const Network = require('../models/Network');
 const Profile = require('../models/Profile');
 const MessageLog = require('../models/MessageLog');
 const Blacklist = require('../models/Blacklist');
 const { pingDatabase } = require('../services/databaseService');
 const { formatDuration, discordTimestamp } = require('../utils/time');
 const { config } = require('../config/env');
+const { panelPayload } = require('../utils/componentsV2');
 const emojis = require('../config/emojis');
 const {
   commandEmbed,
@@ -97,18 +97,20 @@ module.exports = [
         message: error.message
       }));
 
-      const embed = new EmbedBuilder()
-        .setColor(database.ok ? config.colors.success : config.colors.warning)
-        .setTitle(`${emojis.ping} Globy Status`)
-        .addFields(
-          { name: 'API Ping', value: `${apiLatency}ms`, inline: true },
-          { name: 'Database', value: database.ok ? `Connected (${database.latency}ms)` : `Offline: ${database.message}`, inline: true },
-          { name: 'WebSocket', value: `${message.client.ws.ping}ms`, inline: true },
-          { name: 'Uptime', value: formatDuration(message.client.uptime || 0), inline: true }
-        )
-        .setTimestamp();
-
-      await sent.edit({ content: '', embeds: [embed] });
+      await sent.edit({
+        content: null,
+        ...panelPayload({
+          title: `${emojis.ping} Globy Status`,
+          description: 'Live runtime health for Globy CV2.',
+          accentColor: database.ok ? config.colors.success : config.colors.warning,
+          fields: [
+            { name: 'API Ping', value: `${apiLatency}ms` },
+            { name: 'Database', value: database.ok ? `Connected (${database.latency}ms)` : `Offline: ${database.message}` },
+            { name: 'WebSocket', value: `${message.client.ws.ping}ms` },
+            { name: 'Uptime', value: formatDuration(message.client.uptime || 0) }
+          ]
+        })
+      });
     }
   },
   {
@@ -118,8 +120,7 @@ module.exports = [
     usage: 'stats',
     description: 'Show global Globy CV2 platform stats.',
     async execute(message) {
-      const [networks, channels, profiles, messages, restrictions] = await Promise.all([
-        Network.countDocuments({ active: true }),
+      const [channels, profiles, messages, restrictions] = await Promise.all([
         SyncChannel.countDocuments({ active: true }),
         Profile.countDocuments(),
         MessageLog.countDocuments(),
@@ -131,7 +132,6 @@ module.exports = [
         .setTitle(`${emojis.globe} Globy CV2 Stats`)
         .addFields(
           { name: 'Servers', value: `${message.client.guilds.cache.size}`, inline: true },
-          { name: 'Networks', value: `${networks}`, inline: true },
           { name: 'Connected Channels', value: `${channels}`, inline: true },
           { name: 'Profiles', value: `${profiles}`, inline: true },
           { name: 'Logged Messages', value: `${messages}`, inline: true },

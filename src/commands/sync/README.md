@@ -1,3 +1,3 @@
 # Sync Commands
 
-Sync commands connect channels to named networks, inspect network health, disconnect channels, and recover webhook messages from MongoDB logs.
+Sync commands connect channels to global chat, inspect sync health, disconnect channels, and recover webhook messages from MongoDB logs.

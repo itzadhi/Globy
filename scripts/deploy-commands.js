@@ -14,15 +14,28 @@ async function main() {
     .map((command) => command.data.toJSON());
 
   const rest = new REST({ version: '10' }).setToken(config.token);
+  const deployGuildId = process.env.DEPLOY_GUILD_ID || config.guildId;
+  const scope = (process.env.DEPLOY_SCOPE || (deployGuildId ? 'guild' : 'global')).toLowerCase();
 
-  if (config.guildId) {
-    await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: commands });
-    logger.success(`Deployed ${commands.length} guild commands to ${config.guildId}`);
-    return;
+  if (scope === 'guild' || scope === 'both') {
+    if (!deployGuildId) {
+      throw new Error('DEPLOY_SCOPE=guild requires DEPLOY_GUILD_ID or GUILD_ID.');
+    }
+
+    await rest.put(Routes.applicationGuildCommands(config.clientId, deployGuildId), { body: commands });
+    const registered = await rest.get(Routes.applicationGuildCommands(config.clientId, deployGuildId));
+    logger.success(`Deployed ${registered.length} guild commands to ${deployGuildId}: ${registered.map((command) => command.name).join(', ')}`);
   }
 
-  await rest.put(Routes.applicationCommands(config.clientId), { body: commands });
-  logger.success(`Deployed ${commands.length} global commands`);
+  if (scope === 'global' || scope === 'both') {
+    await rest.put(Routes.applicationCommands(config.clientId), { body: commands });
+    const registered = await rest.get(Routes.applicationCommands(config.clientId));
+    logger.success(`Deployed ${registered.length} global commands: ${registered.map((command) => command.name).join(', ')}`);
+  }
+
+  if (!['guild', 'global', 'both'].includes(scope)) {
+    throw new Error('DEPLOY_SCOPE must be guild, global, or both.');
+  }
 }
 
 main().catch((error) => {

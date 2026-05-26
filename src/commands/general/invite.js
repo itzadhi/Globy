@@ -1,11 +1,8 @@
 const {
   SlashCommandBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   PermissionFlagsBits
 } = require('discord.js');
-const { infoEmbed } = require('../../utils/embeds');
+const { actionRow, infoPanel, linkButton } = require('../../utils/componentsV2');
 const { config } = require('../../config/env');
 
 function inviteUrl(clientId) {
@@ -30,17 +27,11 @@ module.exports = {
 
   async execute(interaction, client) {
     const url = inviteUrl(config.clientId);
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setStyle(ButtonStyle.Link)
-        .setURL(url)
-        .setLabel('Invite Globy CV2')
-    );
+    const row = actionRow(linkButton('Invite Globy CV2', url));
 
-    await interaction.reply({
-      embeds: [infoEmbed('Invite Globy CV2', 'Add the bot with the permissions needed for webhook sync and slash commands.', client)],
-      components: [row],
+    await interaction.reply(infoPanel('Invite Globy CV2', 'Add the bot with the permissions needed for webhook sync and slash commands.', {
+      rows: [row],
       ephemeral: true
-    });
+    }));
   }
 };
